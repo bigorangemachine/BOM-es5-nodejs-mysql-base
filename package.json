@@ -1,0 +1,43 @@
+{
+  "name": "project-name",
+  "description": "A Project",
+  "main": "index.js",
+  "version": "0.0.1",
+  "keywords": [
+    "project",
+    "task"
+  ],
+  "homepage": "http://github.com/username/project-name-username/",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/username/project-name-username/"
+  },
+  "author": "Author Name <username@gmail.com>",
+  "contributors": [
+    {
+      "name": "Author Name",
+      "email": "username@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "JSON": "^1.0.0",
+    "fs": "0.0.2",
+    "http": "0.0.0",
+    "md5": "^2.0.0",
+    "merge": "^1.2.0",
+    "mysql": "^2.10.0",
+    "querystring": "^0.2.0",
+    "string.prototype.repeat": "^0.2.0",
+    "system": "^1.0.4",
+    "underscore": "^1.8.3",
+    "url": "^0.10.3",
+    "util": "^0.10.3"
+  },
+  "scripts": {
+    "preinstall":"mkdir _cache/ && chmod 777 _cache/",
+    "install": "echo NO INSTALL",
+    "start": "node index.js",
+    "uninstall": "echo NO UNINSTALL",
+    "test": "wget http://ipinfo.io/ip --tries 5 -qO _cache/ip.settings && echo \"$(date +%s)\" >> _cache/ip.settings && node test.js -silent"
+  }
+}
