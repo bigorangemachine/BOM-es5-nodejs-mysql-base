@@ -62,7 +62,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**:
 ```
-loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
 ```
@@ -75,15 +75,15 @@ myGLaDioS.add('loaded', loaded_function);
 
   **Sample**:
 ```
-loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
 setTimeout(function(){
     myGLaDioS.remove('loaded', loaded_function);    
-},5000)
+}, 5000)
 ```
 
-* `GLaDios.icallback(` **key** *(string)*, **argPackage** *(object), **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
+* `GLaDios.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
   **Execute callback set for registered key**
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
