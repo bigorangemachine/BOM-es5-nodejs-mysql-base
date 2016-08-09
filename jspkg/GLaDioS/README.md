@@ -12,7 +12,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   `options` contains index keys of the initial set of callbacks. All `options` callbacks are both pass through `GLaDioS.register()` and `GLaDioS.add()`
 
-  **Sample**: `myGLaDioS = new GLaDioS({'init':function(argIn){}, 'destroy':function(argIn){});`
+  **Sample**:
+
+    `myGLaDioS = new GLaDioS({'init':function(argIn){}, 'destroy':function(argIn){});`
 
 * `GLaDioS.has(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -20,7 +22,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Useful if you want to register a new callback.
 
-  **Sample**: `myGLaDioS.has('init');`
+  **Sample**:
+
+    `myGLaDioS.has('init');`
 
 * `GLaDioS.has_callback(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -28,7 +32,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Useful if you want to know if there is an existing function.
 
-  **Sample**: `myGLaDioS.has_callback('init');`
+  **Sample**:
+
+    `myGLaDioS.has_callback('init');`
 
 * `GLaDioS.register(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -36,7 +42,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Declare the callback.  Provide a description rather than a comment!
 
-  **Sample**: `myGLaDioS.register('loaded','When the element is finished loading media.');`
+  **Sample**:
+
+    `myGLaDioS.register('loaded','When the element is finished loading media.');`
 
 * `GLaDioS.deregister(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -44,7 +52,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Remove the callback group.
 
-  **Sample**: `myGLaDioS.deregister('loaded');`
+  **Sample**:
+
+    `myGLaDioS.deregister('loaded');`
 
 * `GLaDioS.change_text(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -52,7 +62,9 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Change the description text. Useful if you want to change the text from a constructor declared callback.
 
-  **Sample**: `myGLaDioS.change_text('loaded','When the ajax is finished loading successfully.');`
+  **Sample**:
+
+    `myGLaDioS.change_text('loaded','When the ajax is finished loading successfully.');`
 
 * `GLaDioS.add(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
 
@@ -61,11 +73,11 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
   Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDioS.icallback()`'s 3rd argument function.
 
   **Sample**:
-  ```
+    ```
 var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
-  ```
+    ```
 
 * `GLaDioS.remove(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
 
@@ -74,14 +86,14 @@ myGLaDioS.add('loaded', loaded_function);
   Similar principle to bind/unbind (specifically unbind)
 
   **Sample**:
-  ```
+    ```
 var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
 setTimeout(function(){
     myGLaDioS.remove('loaded', loaded_function);    
 }, 5000)
-  ```
+    ```
 
 * `GLaDioS.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
@@ -90,7 +102,7 @@ setTimeout(function(){
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
 
   **Sample**:
-  ```
+    ```
 var foo='foo',
     baz='baz';
 myGLaDioS.icallback('loaded', {'foo':foo, 'baz': baz}, function(arg){
@@ -98,7 +110,7 @@ myGLaDioS.icallback('loaded', {'foo':foo, 'baz': baz}, function(arg){
     baz=arg.baz;    
 });
 //foo & baz are changed by whatever was added through myGLaDioS.add() after here because above is blocking
-  ```
+    ```
 
 
 ## Notes on providing a callback
