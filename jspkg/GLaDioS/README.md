@@ -86,6 +86,7 @@ setTimeout(function(){
 * `GLaDios.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
   **Execute callback set for registered key**
+  
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
 
   **Sample**:
