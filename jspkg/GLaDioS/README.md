@@ -61,11 +61,11 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
   Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDioS.icallback()`'s 3rd argument function.
 
   **Sample**:
-```
+  ```
 var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
-```
+  ```
 
 * `GLaDioS.remove(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
 
@@ -74,14 +74,14 @@ myGLaDioS.add('loaded', loaded_function);
   Similar principle to bind/unbind (specifically unbind)
 
   **Sample**:
-```
+  ```
 var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
 
 myGLaDioS.add('loaded', loaded_function);
 setTimeout(function(){
     myGLaDioS.remove('loaded', loaded_function);    
 }, 5000)
-```
+  ```
 
 * `GLaDioS.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
@@ -90,7 +90,7 @@ setTimeout(function(){
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
 
   **Sample**:
-```
+  ```
 var foo='foo',
     baz='baz';
 myGLaDioS.icallback('loaded', {'foo':foo, 'baz': baz}, function(arg){
@@ -98,7 +98,7 @@ myGLaDioS.icallback('loaded', {'foo':foo, 'baz': baz}, function(arg){
     baz=arg.baz;    
 });
 //foo & baz are changed by whatever was added through myGLaDioS.add() after here because above is blocking
-```
+  ```
 
 
 ## Notes on providing a callback
