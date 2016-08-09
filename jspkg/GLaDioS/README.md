@@ -6,7 +6,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
 ## API
 -----------
-* `GLaDioS(` **options** *(object)* `)`: *returns GLaDioS instance*
+* `GLaDioS(` **options** *(object)* `)`: *returns `GLaDioS instance`*
 
   **Constructor Function**
 
