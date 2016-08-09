@@ -54,7 +54,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.change_text('loaded','When the ajax is finished loading successfully.');`
 
-* `GLaDios.add(` *key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
+* `GLaDios.add(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
 
   **Add callback for registered key**
 
@@ -67,7 +67,7 @@ loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.us
 myGLaDioS.add('loaded', loaded_function);
 ```
 
-* `GLaDios.remove(` *key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
+* `GLaDios.remove(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
 
   **Remove callback for registered key**
 
@@ -83,7 +83,7 @@ setTimeout(function(){
 },5000)
 ```
 
-* `GLaDios.icallback(` *key** *(string)*, **argPackage** *(object), **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
+* `GLaDios.icallback(` **key** *(string)*, **argPackage** *(object), **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
   **Execute callback set for registered key**
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
