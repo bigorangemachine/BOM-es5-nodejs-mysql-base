@@ -20,11 +20,15 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Useful if you want to register a new callback.
 
+  **Sample**: `myGLaDioS.has('init');`
+
 * `GLaDios.has_callback(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Check for callback of provided key**
 
-  Useful if you want to know if there is an exisiting function.
+  Useful if you want to know if there is an existing function.
+
+  **Sample**: `myGLaDioS.has_callback('init');`
 
 * `GLaDios.register(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -32,11 +36,15 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Declare the callback.  Provide a description rather than a comment!
 
+  **Sample**: `myGLaDioS.register('loaded','When the element is finished loading media.');`
+
 * `GLaDios.deregister(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Unregister callback of key**
 
   Remove the callback group.
+
+  **Sample**: `myGLaDioS.deregister('loaded');`
 
 * `GLaDios.change_text(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
@@ -44,22 +52,50 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   Change the description text. Useful if you want to change the text from a constructor declared callback.
 
+  **Sample**: `myGLaDioS.change_text('loaded','When the ajax is finished loading successfully.');`
+
 * `GLaDios.add(` *key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
 
   **Add callback for registered key**
 
   Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDios.icallback()`'s 3rd argument function.
 
-* `GLaDios.remove(` *key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key**
+  **Sample**:
+```
+loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+myGLaDioS.add('loaded', loaded_function);
+```
 
-  **Remove callback for registered
+* `GLaDios.remove(` *key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
+
+  **Remove callback for registered key**
 
   Similar principle to bind/unbind (specifically unbind)
+
+  **Sample**:
+```
+loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+myGLaDioS.add('loaded', loaded_function);
+setTimeout(function(){
+    myGLaDioS.remove('loaded', loaded_function);    
+},5000)
+```
 
 * `GLaDios.icallback(` *key** *(string)*, **argPackage** *(object), **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
   **Execute callback set for registered key**
   Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
+
+  **Sample**:
+```
+var foo='foo',
+    baz='baz';
+myGLaDioS.icallback('loaded', {'foo':foo, 'baz': baz}, function(arg){
+    foo=arg.foo;//safely transfer back into scope
+    baz=arg.baz;    
+});
+//foo & baz are changed by whatever was added through myGLaDioS.add() after here because above is blocking
+```
 
 
 ## Notes on providing a callback
