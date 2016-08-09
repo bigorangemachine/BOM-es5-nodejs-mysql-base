@@ -10,16 +10,26 @@ module.exports = function(_, utils, merge, md5){
         };
 
     function whereBase(opts){
+        opts=(typeof(opts)!=='undefined'?opts:{});
         var where_inst=where_schema,//private
             comparison_op_inst=comparisonOp,//private
-            where_list=[];//private
+            where_list=[],//private
+            instance_validate=function(varIn, textName, whiteList){
+                for(var w=0;w<whiteList.lengh;w++){
+                    if(typeof(varIn[whiteList[w]])!=='function'){
+                        throw new Error("[WHEREBASE] Constructor: "+textName+" '"+varIn.constructor.name+"' is missing '"+whiteList[w]+"(schema)'.");break;
+                    }
+                }
+
+            };
         if(typeof(opts)!=='undefined'){
             where_inst=(typeof(opts.where_schema_instance)==='function'?opts.where_schema_instance:where_inst);
             comparison_op_inst=(typeof(opts.comparison_op_instance)==='function'?opts.comparison_op_instance:comparison_op_inst);
+            instance_validate(where_inst, 'where_schema_instance', ['validate']);
+            instance_validate(comparison_op_inst, 'comparison_op_instance', ['validate']);
         }
 
         //private variables - need to be objects
-        //var xxxxx;
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
             //this.__defineSetter__('where_inst', function(v){where_inst=merge(true,{}, where_inst, v);});
             this.__defineGetter__('where_inst', function(){return where_inst;});
@@ -61,13 +71,14 @@ module.exports = function(_, utils, merge, md5){
             };
         if(arguments.length>1 && typeof(unique_id)!=='string'){throw new Error("[WHEREBASE] Push() 'uniqueId' must be a string.");return false;}//provided ID is invalid
         else if(arguments.length===1){//no unique id provided
-            if(pushArg instanceof self.where_inst){unique_id='where-'+(where_list.length-1)+'-'+utils.getRandomInt(1, 9999);}
-            else if(pushArg instanceof self.comparison_op_inst && arguments.length===1){unique_id='comparison-'+(where_list.length-1)+'-'+utils.getRandomInt(1, 9999);}
+            if(pushArg instanceof self.where_inst){unique_id='where-'+(self.where_list.length-1)+'-'+utils.getRandomInt(1, 9999);}
+            else if(pushArg instanceof self.comparison_op_inst && arguments.length===1){unique_id='comparison-'+(self.where_list.length-1)+'-'+utils.getRandomInt(1, 9999);}
         }
         //deep validate pushArg
-        var generic_msg="Push() 'pushArg' is not a valid",
-            output=merge(true,{}, append_schema, {'schema':pushArg}),
+        var generic_msg="Push() 'pushArg' is not valid",
+            output=merge(true,{}, append_schema),
             focal_instance=false;
+        output.schema=pushArg;//mergeing breaks typing - keep this!
         try{
             if(output.schema instanceof self.where_inst){
                 focal_instance=self.where_inst;
@@ -76,19 +87,20 @@ module.exports = function(_, utils, merge, md5){
                 focal_instance=self.comparison_op_inst;
                 output.schema_type='comp';
             }
-            if(typeof(focal_instance.validate)==='object' && typeof(focal_instance.validate)!=='function'){
-                throw new Error("[WHEREBASE] Push() 'pushArg.validate' is not a function/method.");
+            if(focal_instance===false){
+                throw new Error(generic_msg);
                 return false;
-            }
-            if(focal_instance===false || !output.schema.validate.apply(output.schema,[output.schema])){
-                throw new Error("[WHEREBASE] "+(focal_instance!==false?"Pre-validate with '"+focal_instance.name+".validate()' if necessary":generic_msg)+".");
-                return false;
+            }else{
+                if(!output.schema.validate.apply(output.schema,[output.schema])){
+                    throw new Error("[WHEREBASE] 'schema.validate()' returned invalid (false).");
+                    return false;
+                }
             }
         }catch(catchErr){
-            throw new Error("[WHEREBASE] "+generic_msg+".\n"+catchErr.toString());
+            focal_instance=false;//110% sure :D
+            throw new Error("[WHEREBASE] "+generic_msg+'.'+(catchErr.toString().length>0?"\nReason:\n\'"+catchErr.toString()+'\'':''));
             return false;
         }
-
 
         if(focal_instance===false){//finally but gotta return false ^_^
             throw new Error("[WHEREBASE] Push() 'pushArg' is incorrect object. Must be '" +
@@ -96,7 +108,7 @@ module.exports = function(_, utils, merge, md5){
                             catchErr.toString());
             return false;
         }
-
+        
         //validate childIds
         if(typeof(childIds)==='object' && childIds.length>0){
             var existing_index=[];//build searchable list
@@ -107,7 +119,7 @@ module.exports = function(_, utils, merge, md5){
             }
         }
         //we're good!
-        where_list.push(output);
+        self.where_list.push(output);
         return output;
     };
     whereBase.prototype.schema=function(typeIn){
@@ -115,11 +127,12 @@ module.exports = function(_, utils, merge, md5){
             output={};
         if(typeof(typeIn)!=='string'){typeIn='where';}
         if(typeIn==='where'){ // new where_schema() aka new logic()
-console.log('test');
+console.log('wherebase Schema() - test');
             output=new self.where_inst();
 
-            if(typeof(output.hook_ins)==='object'){//has GLaDioS!
+            if(typeof(output.hook_ins)==='object'){//has GLaDioS! (or similar API I would assume)
                 output.hook_ins.add('validate_args',function(pkg){
+console.log('- output.hook_ins(validate_args)');
                     var arr=pkg.args,found=false;
                     for(var a=0;a<arr.length;a++){
                         if(arr[a] instanceof self.where_inst){
@@ -129,7 +142,6 @@ console.log('test');
                         throw new Error('[WHEREBASE] Validating Arguments for key \''+logKey+'\' does not contain a valid column.');
                     }
                 });
-
             }
         }else{ // new comparisonOp() aka new comparison()
             output=new self.comparison_op_inst();

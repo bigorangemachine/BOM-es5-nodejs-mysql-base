@@ -1,4 +1,4 @@
-//WIP
+
 module.exports = function(mysql, _, utils, merge){
     var md5=require('md5');
 
@@ -11,6 +11,10 @@ module.exports = function(mysql, _, utils, merge){
     var GLaDioS=require('./GLaDioS')(_, utils, merge),
         column_schema=require('./genDB/column')(_, utils, merge),
         whereBase=require('../jspkg/genDB/where')(_, utils, merge, md5),
+        table_schema={
+            'table_name':false,
+            'schema':[] //populated in self_init()
+        },
         where_obj=new whereBase();
     function genericDB(opts){
         if(!opts){opts={};}
@@ -18,16 +22,15 @@ module.exports = function(mysql, _, utils, merge){
         //variables/settings
         this.allow_nolimit=true;
         this.sql_default={'limit':{'row_count':(typeof(opts.row_count)==='number'?opts.row_count:10)}};
-        this.table_index={
-            'sample_tbl':{
-                'table_name':'sample_tbl',
-                'schema':[] //populated in self_init()
-            }
-        };
+        this.table_index=merge(true,{},{'sample_tbl':table_schema});
+        this.table_index.sample_tbl.table_name='sample_tbl';
         this.exec_valid_query=(typeof(opts.exec_valid_query)==='boolean'?opts.exec_valid_query:false);
         self_init.apply(this);//start! self_init that passes the 'this' context through
     }
 
+    genericDB.prototype.table_schema=function(){
+        return merge(true,{},table_schema);
+    };
     genericDB.prototype.add_schema=function(schemaObj, tableName){
         var self=this,new_column=self.column_schema_base(schemaObj);
         tableName=(typeof(tableName)!=='string'?self.main_table():tableName);
@@ -37,7 +40,7 @@ module.exports = function(mysql, _, utils, merge){
 
         if(typeof(new_column.col_name)!=='string' || !utils.basic_str(new_column.col_name)){throw new Error("Column name is invalid");return false;}
         else if(utils.array_object_search(self.table_index[tableName].schema, 'col_name', new_column.col_name).length!==0){throw new Error("Column name '"+new_column.col_name+"' is already existing");return false;}
-
+console.log('tableName',tableName,self.constructor.name);
         self.table_index[tableName].schema.push(new_column);
         return new_column;
     };
