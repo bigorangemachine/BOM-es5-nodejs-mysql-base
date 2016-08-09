@@ -8,7 +8,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 -----------
 * `GLaDioS(options)`
 
-**Constructor Function** `options (object)` *returns void*: `options` contains index keys of the inital set of callbacks.
+**Constructor Function** `options (object)` *returns void*: `options` contains index keys of the inital set of callbacks. All `options` callbacks are both pass through `GLaDios.register()` and `GLaDios.add()`
 
 **Sample**: `myGLaDioS = new GLaDios({'init':function(argIn){}, 'destroy':function(argIn){});`
 
