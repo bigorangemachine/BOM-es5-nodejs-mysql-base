@@ -1,96 +1,23 @@
-
-
 /*
- * this needs to be injected whenever you want to handled the returned code
-    (function(){
-    	///////\\\\\\\\\\PLUGIN HOOK init\\\\\\\\/////////
-    	var _args={},//index keys mimic scope variables that should be passed
-    		key_list=utils.array_keys(_args);//security reasons do it here because eval() below
-    	self.icallback('init',_args, function(){
-            for(var kl=0;kl<key_list.length;kl++){var _vr=key_list[kl];eval(_vr+' = _args.'+_vr+';');}//populate into above scope -> LAZY! DANGEROUS!
-        });
-    	///////\\\\\\\\\\END PLUGIN HOOK init\\\\\\\\/////////
-    })();
-
- * Sample Callback 'move_item'
-    // prototype require module aka NodeJS ES5
-    var GLaDioS=require('./jspkg/GLaDioS')(_, utils, merge);
-    function charSprite(opts){
-        this.callbacks=new GLaDioS({'move_item':opts.callbacks.move_item});
-    }
-    charSprite.prototype.move_item=function(keyIn, xInc, yInc){
-        var self=this,
-            is_collided=false,//do a look up!
-            item_pos={'x_pos':0,'y_pos':0},//some defaults
-            unique_id=self.find_sprite(keyIn);
-
-        // do lookup, path finding, agility rules and processing stuff!!!
-        // throw error or return false if something goes wrong?
-        // ....
-
-        //now provide filter interface -> Rewritten to be safer
-       (function(){//scope safe for linter
-            ///////\\\\\\\\\\PLUGIN HOOK move_item\\\\\\\\/////////
-            var _args={'is_collided':is_collided, 'item_pos':item_pos, 'unique_id':unique_id};//object for 'pass by reference' (PbR)
-            self.callbacks.icallback('move_item',_args,function(){
-                is_collided=_args.is_collided;//transfer the values
-                item_pos=_args.item_pos;
-                unique_id=_args.unique_id;
-            });
-            ///////\\\\\\\\\\END PLUGIN HOOK move_item\\\\\\\\/////////
-       })();
-
-       return true;
-    };
-    //\\ prototype require module aka NodeJS ES5
-
-    // somewhere else -> Unit spawned
-    Game.Sprites.push(new charSprite({'model':StealthPlane,'type':'aircraft','callbacks':{
-            'move_item':function(pkgObj){//single argument!
-                if(this.canFly(pkgObj.item_pos.x_pos, pkgObj.item_pos.y_pos)){
-                    this.flyTo(pkgObj.item_pos.x_pos, pkgObj.item_pos.y_pos);}
-                if(this.isStealth){
-                    Game.Sprites.findRelated(unique_id).flyTo(pkgObj.item_pos.x_pos, pkgObj.item_pos.y_pos);//move ghost sprite
-                    pkgObj.is_collided=false;//can't collide when stealthy
-                }
-            }
-        }
-    }));
-    //\\ somewhere else -> Unit spawned
-
-    // somewhere else -> Unit debuffed by special power
-    var debuffed=Game.Sprites.find({'is_debuffed':true,'type':'aircraft','debuff_start':Game.thisFrameStamp});
-    debuffed.forEach(function(v,i,arr){,
-        var debuffed_aircraft_func=function(pkgObj){
-            v.flyTo(pkgObj.item_pos.x_pos+rand(-10,10), pkgObj.item_pos.y_pos+rand(-10,10));//random movement!
-        };
-        v.callbacks.add('move_item',debuffed_aircraft_func);
-        if(v.isStealth===true){
-            v.isStealth=false;
-            setTimeout(function(){
-                v.setStealth(v.stealthRemaining);
-                v.callbacks.remove('move_item',debuffed_aircraft_func);
-            }, Game.frameIncrement * 12);
-        }
-    });
-    //\\ somewhere else -> Unit debuffed by special power
+ * GLaDioS.js
+ * This is a 'blocking' javascript plugin/filter/hook feature to easily expand code features
+ * to improve seperator of concerns without a seperation of features
+ *
 */
 
 module.exports = function(_, utils, merge){//dependancies
     var self_init=function(opts){//private init method
-        for(var k in opts){
-            if(utils.obj_valid_key(opts, k)){
+            for(var k in opts){
+                if(!utils.obj_valid_key(opts, k)){continue;}//this is just cleaner
                 this.register(k, 'Default Function Set (Set at object constructor)');
-                if(typeof(opts[k])==='function'){//passed as single
-                    this.add(k,opts[k]);
-                }else if(opts[k] instanceof Array && opts[k].length>0){//passed as array
-                    for(var p=0;p<opts[k].length;p++){
-                        if(typeof(opts[k][p])==='function'){
-                            this.add(k,opts[k][p]);}}
+                var nfunc=(typeof(nfunc)==='function'?[opts[k]]:opts[k]);//passed as single -> wrap into an array
+                if(!(nfunc instanceof Array && nfunc.length>0)){continue;}//this is just cleaner
+                for(var p=0;p<nfunc.length;p++){//passed as array (or converted ;) )
+                    if(!typeof(nfunc[p])==='function'){continue;}//this is just cleaner
+                    this.add(k,nfunc[p]);
                 }
             }
-        }
-    };
+        };
 
     //statics
     var schema={'tasks':[],'desc_text':''};//each register creates a new schema
@@ -199,6 +126,13 @@ module.exports = function(_, utils, merge){//dependancies
         }
         var new_set=self.plugin[keyIn].tasks.splice(del_key, 1);
         self.plugin[keyIn].tasks=new_set;
+        return true;
+    };
+    GLaDioS.prototype.change_text=function(keyIn, descText){//change the text
+        var self=this;
+        if(!self.has(keyIn)){throw new Error('[GLaDioS] Changing the description text for \''+keyIn+'\' failed because is not registered.');return false;}
+        else if(typeof(descText)!=='string' || descText.toString().trim().length===0){throw new Error('[GLaDioS] Changing the description text for \''+keyIn+'\' failed because is not a string or is empty.');return false;}
+        self.plugin[keyIn].desc_text=descText;
         return true;
     };
 
