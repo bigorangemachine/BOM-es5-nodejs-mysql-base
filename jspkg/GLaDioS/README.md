@@ -63,6 +63,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
   **Sample**:
 ```
 loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+
 myGLaDioS.add('loaded', loaded_function);
 ```
 
@@ -75,6 +76,7 @@ myGLaDioS.add('loaded', loaded_function);
   **Sample**:
 ```
 loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.data.user_message;};
+
 myGLaDioS.add('loaded', loaded_function);
 setTimeout(function(){
     myGLaDioS.remove('loaded', loaded_function);    
