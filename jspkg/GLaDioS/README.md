@@ -6,41 +6,41 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
 ## API
 -----------
-* `GLaDioS(`* options (object) *`)`: **Constructor Function**
+* `GLaDioS(` **options** *(object)* `)`: **Constructor Function**
 
 *returns GLaDioS instance*: `options` contains index keys of the inital set of callbacks. All `options` callbacks are both pass through `GLaDios.register()` and `GLaDios.add()`
 
 **Sample**: `myGLaDioS = new GLaDios({'init':function(argIn){}, 'destroy':function(argIn){});`
 
-* `GLaDios.has(` *key (string)* `)`: **Check for provided key**
+* `GLaDios.has(` **key** *(string)* `)`: **Check for provided key**
 
 *returns boolean [true|false]*:  useful if you want to register a new callback.
 
-* `GLaDios.has_callback(` *key (string)* `)`: **Check for callback of provided key**
+* `GLaDios.has_callback(` **key** *(string)* `)`: **Check for callback of provided key**
 
 *returns boolean [true|false]*:  useful if you want to know if there is an exisiting function.
 
-* `GLaDios.register(` *key (string), description (string)* `)`: **Register callback of key**
+* `GLaDios.register(` **key** *(string)*, **description** *(string)* `)`: **Register callback of key**
 
 *returns boolean [true|false]*: Declare the callback.  Provide a description rather than a comment!
 
-* `GLaDios.deregister(` *key (string)* `)`: **Unregister callback of key**
+* `GLaDios.deregister(` **key** *(string)* `)`: **Unregister callback of key**
 
 *returns boolean [true|false]*: Remove the callback group.
 
-* `GLaDios.change_text(` *key (string), description (string)* `)`: **Change description of key**
+* `GLaDios.change_text(` **key** *(string)*, **description** *(string)* `)`: **Change description of key**
 
 *returns boolean [true|false]*: Change the description text. Useful if you want to change the text from a constructor declared callback.
 
-* `GLaDios.add(` *key (string), callback ( function(arg) )* `)`: **Add callback for registered key**
+* `GLaDios.add(` *key** *(string)*, **callback** *( function(arg) )* `)`: **Add callback for registered key**
 
 *returns boolean [true|false]*: Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDios.icallback()`'s 3rd argument function.
 
-* `GLaDios.remove(` *key (string), callback ( function(arg) )* `)`: **Remove callback for registered key**
+* `GLaDios.remove(` *key** *(string)*, **callback** *( function(arg) )* `)`: **Remove callback for registered key**
 
 *returns boolean [true|false]*: Similar principle to bind/unbind (specifically unbind)
 
-* `GLaDios.icallback(` *key (string), argPackage (object), callback ( function(arg) )* `)` (readonly): **Execute callback set for registered key**
+* `GLaDios.icallback(` *key** *(string)*, **argPackage** *(object), **callback** *( function(arg) )* `)` (readonly): **Execute callback set for registered key**
 
 *returns boolean [true|false]*: Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
 
