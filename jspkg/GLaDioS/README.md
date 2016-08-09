@@ -6,41 +6,43 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
 ## API
 -----------
-* `GLaDioS(options)`
+* `GLaDioS(`* options (object) *`)`: **Constructor Function**
 
-**Constructor Function** `options (object)` *returns GLaDioS instance*: `options` contains index keys of the inital set of callbacks. All `options` callbacks are both pass through `GLaDios.register()` and `GLaDios.add()`
+*returns GLaDioS instance*: `options` contains index keys of the inital set of callbacks. All `options` callbacks are both pass through `GLaDios.register()` and `GLaDios.add()`
 
 **Sample**: `myGLaDioS = new GLaDios({'init':function(argIn){}, 'destroy':function(argIn){});`
 
-* `GLaDios.has(key)`
+* `GLaDios.has(` *key (string)* `)`: **Check for provided key**
 
-**Check for provided key** `key (string)` *returns boolean [true|false]*:  useful if you want to register a new callback.
+*returns boolean [true|false]*:  useful if you want to register a new callback.
 
-* `GLaDios.has_callback(key)`
+* `GLaDios.has_callback(` *key (string)* `)`: **Check for callback of provided key**
 
-**Check for callback of provided key** `key (string)` *returns boolean [true|false]*:  useful if you want to know if there is an exisiting function.
+*returns boolean [true|false]*:  useful if you want to know if there is an exisiting function.
 
-* `GLaDios.register(key, description)`
+* `GLaDios.register(` *key (string), description (string)* `)`: **Register callback of key**
 
-**Register callback of key** `key (string), description (string)` *returns boolean [true|false]*: Declare the callback.  Provide a description rather than a comment!
+*returns boolean [true|false]*: Declare the callback.  Provide a description rather than a comment!
 
-* `GLaDios.deregister(key)`
+* `GLaDios.deregister(` *key (string)* `)`: **Unregister callback of key**
 
-**Unregister callback of key** `key (string)` *returns boolean [true|false]*: Remove the callback group.
+*returns boolean [true|false]*: Remove the callback group.
 
-* `GLaDios.change_text(key, description)`
+* `GLaDios.change_text(` *key (string), description (string)* `)`: **Change description of key**
 
-**Change description of key** `key (string), description (string)` *returns boolean [true|false]*: Change the description text. Useful if you want to change the text from a constructor declared callback.
+*returns boolean [true|false]*: Change the description text. Useful if you want to change the text from a constructor declared callback.
 
-* `GLaDios.add(key, callback)`
+* `GLaDios.add(` *key (string), callback ( function(arg) )* `)`: **Add callback for registered key**
 
-**Add callback for registered key** `key (string), callback ( function(arg) )` *returns boolean [true|false]*: Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDios.icallback()`'s 3rd argument function.
-* `GLaDios.remove(key, callback)`
+*returns boolean [true|false]*: Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDios.icallback()`'s 3rd argument function.
 
-**Remove callback for registered key** `key (string), callback ( function(arg) )` *returns boolean [true|false]*: Similar principle to bind/unbind (specifically unbind)
-* `GLaDios.icallback(key, args, callback)` (readonly)
+* `GLaDios.remove(` *key (string), callback ( function(arg) )* `)`: **Remove callback for registered key**
 
-**Execute callback set for registered key** `key (string), argPackage (object), callback ( function(arg) )` *returns boolean [true|false]*: Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
+*returns boolean [true|false]*: Similar principle to bind/unbind (specifically unbind)
+
+* `GLaDios.icallback(` *key (string), argPackage (object), callback ( function(arg) )* `)` (readonly): **Execute callback set for registered key**
+
+*returns boolean [true|false]*: Trigger all the callbacks specified for this group.  `callback` is provided a single argument which is `argPackage`.
 
 
 ## Notes on providing a callback
