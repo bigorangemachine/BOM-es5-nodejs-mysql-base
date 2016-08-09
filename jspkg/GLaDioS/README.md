@@ -10,11 +10,11 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Constructor Function**
 
-  `options` contains index keys of the initial set of callbacks. All `options` callbacks are both pass through `GLaDios.register()` and `GLaDios.add()`
+  `options` contains index keys of the initial set of callbacks. All `options` callbacks are both pass through `GLaDioS.register()` and `GLaDioS.add()`
 
-  **Sample**: `myGLaDioS = new GLaDios({'init':function(argIn){}, 'destroy':function(argIn){});`
+  **Sample**: `myGLaDioS = new GLaDioS({'init':function(argIn){}, 'destroy':function(argIn){});`
 
-* `GLaDios.has(` **key** *(string)* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.has(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Check for provided key**
 
@@ -22,7 +22,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.has('init');`
 
-* `GLaDios.has_callback(` **key** *(string)* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.has_callback(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Check for callback of provided key**
 
@@ -30,7 +30,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.has_callback('init');`
 
-* `GLaDios.register(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.register(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Register callback of key**
 
@@ -38,7 +38,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.register('loaded','When the element is finished loading media.');`
 
-* `GLaDios.deregister(` **key** *(string)* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.deregister(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Unregister callback of key**
 
@@ -46,7 +46,7 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.deregister('loaded');`
 
-* `GLaDios.change_text(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.change_text(` **key** *(string)*, **description** *(string)* `)`: *returns* `boolean [true|false]`
 
   **Change description of key**
 
@@ -54,11 +54,11 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
   **Sample**: `myGLaDioS.change_text('loaded','When the ajax is finished loading successfully.');`
 
-* `GLaDios.add(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
+* `GLaDioS.add(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]`
 
   **Add callback for registered key**
 
-  Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDios.icallback()`'s 3rd argument function.
+  Similar principle to bind/unbind (specifically bind). `callback` is repassed into `GLaDioS.icallback()`'s 3rd argument function.
 
   **Sample**:
 ```
@@ -67,7 +67,7 @@ var loaded_function=function(arg){arg.data.user_message = "Good day! " + arg.dat
 myGLaDioS.add('loaded', loaded_function);
 ```
 
-* `GLaDios.remove(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
+* `GLaDioS.remove(` **key** *(string)*, **callback** *( function(arg) )* `)`: *returns* `boolean [true|false]` key
 
   **Remove callback for registered key**
 
@@ -83,7 +83,7 @@ setTimeout(function(){
 }, 5000)
 ```
 
-* `GLaDios.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
+* `GLaDioS.icallback(` **key** *(string)*, **argPackage** *(object)*, **callback** *( function(arg) )* `)` (readonly): *returns* `boolean [true|false]`
 
   **Execute callback set for registered key**
 
