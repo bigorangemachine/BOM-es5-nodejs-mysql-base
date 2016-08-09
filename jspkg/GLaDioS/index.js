@@ -5,7 +5,7 @@
  *
 */
 
-module.exports = function(_, utils, merge){//dependancies
+module.exports = function(_, utils, merge){//dependancies - underscore currently unused
     var self_init=function(opts){//private init method
             for(var k in opts){
                 if(!utils.obj_valid_key(opts, k)){continue;}//this is just cleaner
