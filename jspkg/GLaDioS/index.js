@@ -6,23 +6,39 @@
 */
 
 module.exports = function(_, utils, merge){//dependancies - underscore currently unused
+    function ecapsulateTask(func,alt){this._func=func;this._this=alt;}
     var self_init=function(opts){//private init method
+            var self=this;
             for(var k in opts){
                 if(!utils.obj_valid_key(opts, k)){continue;}//this is just cleaner
-                this.register(k, 'Default Function Set (Set at object constructor)');
-                var nfunc=(typeof(nfunc)==='function'?[opts[k]]:opts[k]);//passed as single -> wrap into an array
+                self.register(k, 'Default Function Set (Set at object constructor)');
+                var nfunc=(self.valid_callback(opts[k])?[opts[k]]:opts[k]);//passed as single -> wrap into an array
                 if(!(nfunc instanceof Array && nfunc.length>0)){continue;}//this is just cleaner
                 for(var p=0;p<nfunc.length;p++){//passed as array (or converted ;) )
-                    if(!typeof(nfunc[p])==='function'){continue;}//this is just cleaner
-                    this.add(k,nfunc[p]);
+                    if(!self.valid_callback(nfunc[p])){continue;}//this is just cleaner
+                    self.add(k,nfunc[p]);
                 }
+            }
+
+            var ecapsulate_task=function(func, altThis){//internal callback - pluginable hooks
+                    if(typeof(func)!=='function'){return false;}
+                    var use_self=(typeof(altThis)!=='undefined'?altThis:self);
+                    return new ecapsulateTask(func,altThis);
+                },
+                ecapsulate_task_get=function(){//getter
+                    return ecapsulate_task;
+                };
+            if(typeof(Object.defineProperty)!=='function' && (typeof(self.__defineGetter__)==='function' || typeof(self.__defineSetter__)==='function')){//use pre IE9
+                self.__defineGetter__('ecapsulate_task', ecapsulate_task_get);
+            }else{
+                Object.defineProperty(self, 'ecapsulate_task', {'get': ecapsulate_task_get});
             }
         };
 
     //statics
     var schema={'tasks':[],'desc_text':''};//each register creates a new schema
 
-    function GLaDioS(opts){
+    function GLaDioS(opts, root){
         if(!opts){opts={};}
 
         //private variables - need to be objects
@@ -38,7 +54,7 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
                 return plugin;
             };
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            this.__defineSetter__('plugin', fplug_set);
+            this.__defineSetter__('plugin', plug_set);
             this.__defineGetter__('plugin', plug_get);
         }else{
             Object.defineProperty(this, 'plugin', {'set': plug_set, 'get': plug_get});
@@ -48,12 +64,18 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             	var self=this,
                     results=[],
             		has_callback=self.has_callback(keyIn);
-                if(typeof(nextFunc)!=='function'){throw new Error('[GLaDioS] Calling icallback for \''+keyIn+'\' third argument is not a function.');}
+                if(typeof(nextFunc)!=='undefined' && typeof(nextFunc)!=='function'){throw new Error('[GLaDioS] Calling icallback for \''+keyIn+'\' third argument is not a function.');}
 
             	if(has_callback){
                     for(var c=0;c<self.plugin[keyIn].tasks.length;c++){
-                		var args=[argsIn];//wrap in array for func.apply() but we use a variable so we can take advantage of PbR
-                		results.push(self.plugin[keyIn].tasks[c].apply(self, args));
+                		var args=[argsIn],//wrap in array for func.apply() but we use a variable so we can take advantage of PbR
+                            as_this=self.root,
+                            func=self.plugin[keyIn].tasks[c];
+                        if(self.plugin[keyIn].tasks[c] instanceof ecapsulateTask){
+                            as_this=self.plugin[keyIn].tasks[c]._this;
+                            func=self.plugin[keyIn].tasks[c]._func;
+                        }
+                        results.push(func.apply(as_this, args));
                 		argsIn=args[0];//push values up
                     }
             	}
@@ -74,6 +96,33 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             Object.defineProperty(this, 'icallback', {/*'set': icallback_set, */'get': icallback_get});
         }
 
+        var valid_callback=function(funcIn){
+                if(typeof(funcIn)==='function'){return true;}
+                if(funcIn instanceof ecapsulateTask){return true;}
+                return false;
+            },
+            valid_callback_get=function(){//getter
+                return valid_callback;};
+
+        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            //this.__defineSetter__('valid_callback', valid_callback_set);
+            this.__defineGetter__('valid_callback', valid_callback_get);
+        }else{
+            Object.defineProperty(this, 'valid_callback', {/*'set': valid_callback_set, */'get': valid_callback_get});
+        }
+
+
+        var root_obj={
+                'root_var': (typeof(root)==='object'?root:this)
+            },
+            root_callback_get=function(){//getter
+                return root_obj.root_var;};
+        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            //this.__defineSetter__('root', valid_callback_set);
+            this.__defineGetter__('root', root_callback_get);
+        }else{
+            Object.defineProperty(this, 'root', {/*'set': root_callback_set, */'get': root_callback_get});
+        }
 		self_init.apply(this, [opts]);//start! self_init that passes the 'this' context through
 	};
 
@@ -84,8 +133,7 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
         return (self.plugin[keyIn].tasks.length>0?true:false);
     };
     GLaDioS.prototype.has=function(keyIn){//valid key?!
-        var self=this,
-            plugin_keys=utils.array_keys(self.plugin);
+        var self=this;
         if(!utils.obj_valid_key(self.plugin, keyIn)){return false;}
         return true;
     };
@@ -135,6 +183,13 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
         self.plugin[keyIn].desc_text=descText;
         return true;
     };
-
+    GLaDioS.prototype.list=function(){//all the keys!
+        var self=this,
+            output=utils.array_keys(self.plugin);
+        output.forEach(function(v,i,arr){
+            arr[i]={'key':v,'num_callbacks':(self.plugin[v] instanceof Array?self.plugin[v].length:0)};
+        });
+        return output;
+    };
     return GLaDioS;
 }

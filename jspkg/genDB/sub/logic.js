@@ -1,7 +1,14 @@
 
 module.exports = function( _, utils, merge){//dependancies
     //private dependancies
-    var GLaDioS=require('../GLaDioS')(_, utils, merge);
+    var GLaDioS=require('../../GLaDioS')(_, utils, merge);
+
+    function logicEscape(val){
+        this.the_val=val;
+    }
+    logicEscape.prototype.toString=function(){
+        return this.the_val.toString();
+    };
 
     var bypass_schema={
             'seg': false,// string -> text segment
@@ -53,10 +60,12 @@ module.exports = function( _, utils, merge){//dependancies
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
             'validate_args': (typeof(opts.hook_ins.validate_args)==='function'?opts.hook_ins.validate_args:false),
+            'validate_op': (typeof(opts.hook_ins.validate_op)==='function'?opts.hook_ins.validate_op:false),
             'validate': (typeof(opts.hook_ins.validate)==='function'?opts.hook_ins.validate:false),
             'build': (typeof(opts.hook_ins.build)==='function'?opts.hook_ins.build:false)
-        });
+        }, this);
         this.hook_ins.change_text('validate_args', '[LOGICBASE] When args require extra validation');
+        this.hook_ins.change_text('validate_op', '[LOGICBASE] When operators require extra validation');
         this.hook_ins.change_text('validate', '[LOGICBASE] When validating self/schema');
         this.hook_ins.change_text('build','[LOGICBASE] When building a logic operator using the schema');
 
@@ -85,13 +94,15 @@ console.log("UNTESTED - found_escape: ",found_escape);
                     result=true;}
             }
         }else{//otherwise normal!
-console.log("LETS VALIDATE!: operator: ",schemaIn.operator,"\n","args ", schemaIn.args);
+//console.log("LETS VALIDATE!: operator: ",schemaIn.operator,"\n","args ", schemaIn.args,"\n","schemaIn: ",schemaIn);
             result=self.valid(schemaIn.operator, schemaIn.args);
+//console.log("LETS VALIDATE!: operator: ",schemaIn.operator,"\n","args ", schemaIn.args,"\n","schemaIn: ",schemaIn,"\n","result: ",(result===true?'TRUE':'FALSE'));
         }
-        self.hook_ins.icallback('validate', {'result':result, 'obj':schemaIn}, function(newArgs){
-            //DO NOTHING WITH newArgs.obj!!!!
+        self.hook_ins.icallback('validate', {'result':result, 'data_model':schemaIn}, function(newArgs){
+            //DO NOTHING WITH newArgs.data_model!!!!
             result=newArgs.result;
         });
+//console.log("\t"+"LETS VALIDATE! RESULT: ",(result===true?'TRUE':'FALSE'));
         return result;
     };
     logic.prototype.valid=function(logicObj, args){
@@ -113,13 +124,13 @@ console.log("LETS VALIDATE!: operator: ",schemaIn.operator,"\n","args ", schemaI
     logic.prototype.validate_logic_args=function(argsIn, logKey){
         var self=this,
             operator_index=self.operator_index;
-console.trace();
-console.log('validate_logic_args - argsIn: ',argsIn);
+//console.log('validate_logic_args - argsIn: ',argsIn);
         if(typeof(argsIn)!=='object'|| !(argsIn instanceof Array) || argsIn.length===0){throw new Error('[LOGICBASE] First argument must be an array.');return false;}
         else if(!utils.obj_valid_key(operator_index, logKey)){throw new Error('[LOGICBASE] Key \''+logKey+'\' not found in Operations List.');return false;}
         else if(operator_index[logKey].args===false && argsIn.length>1){throw new Error('[LOGICBASE] Operator \''+logKey+'\' only allows for single argument; recieved \''+argsIn.length+'\'.');return false;}
 
         var result=true;
+//console.log("-\t"+"validate_logic_args - result: ",result);
         self.hook_ins.icallback('validate_args', {'logic_key':logKey,'result':result,'args':argsIn}, function(newArgs){
             result=newArgs.result;
             argsIn=newArgs.args;
@@ -154,6 +165,10 @@ console.log('validate_logic_args - argsIn: ',argsIn);
                     flat_index[i].args;     flat_index[i].comp_str;*/
             }
         }
+        self.hook_ins.icallback('validate_op', {'result':result,'results_obj':resultsObj,'flat_index':flat_index}, function(newArgs){
+            result=newArgs.result;
+            resultsObj=newArgs.results_obj;
+        });
 
         return result;
     };
@@ -235,37 +250,68 @@ console.log('validate_logic_args - argsIn: ',argsIn);
     };
     logic.prototype.build=function(){//multi arg!
         var self=this,
+            result=false,
             args=Array.prototype.slice.call(arguments),//break Pass by Reference
             found_args=[],
-            found_prime=false,
-            found_logic=false;
+            prime_arg=false,
+            logic_seg=false;
+        //clean & validate the requested logic object (self)
         if(args.length<=1){throw new Error('[LOGICBASE] Build failed due to bad argument length('+args.length+').');return false;}
         for(var a=0;a<args.length;a++){
-            if(typeof(args[a])==='string'){
-                if(self.validate_logic_op(args[a])){
-                    if(found_logic===false){found_logic=[];}//convert it!
-                    found_logic.push(a);
-                }
+            if(typeof(args[a])==='string' && !(args[a] instanceof logicEscape) && self.validate_logic_op(args[a])){//our logic segment(s) - should only be one
+//console.log(a,'-args[a] ',args[a]);
+                if(logic_seg===false){logic_seg=[];}//convert it!
+                logic_seg.push(a);
             }else{
-                if(found_prime===false){found_prime=a;}
+                if(prime_arg===false){prime_arg=a;}//first arg is prime arg
                 else{found_args.push(a);}
             }
         }
+        var transfer=function(v,i,arr){arr[i]=args[v];};//how lazy am i ?!
+        if(found_args!==false){found_args.forEach(transfer);found_args.forEach(function(v,i,arr){found_args[i]=(v instanceof logicEscape?v.toString():v);});}
+        if(logic_seg!==false){logic_seg.forEach(transfer);}
+        if(prime_arg!==false){prime_arg=args[prime_arg];}
 
-        self.hook_ins.icallback('build', {'args':args,'result':result,'args':argsIn}, function(newArgs){
-            args=newArgs.args;
-                args=newArgs.args;
-        });
-        if(found_logic===false){throw new Error('[LOGICBASE] Build failed due to no logic operator being passed.');return false;}
-        else if(found_logic.length>1){throw new Error('[LOGICBASE] Build failed due to more than one logic operator being passed.');return false;}
-        self.prime_arg=args[found_prime];
-        self.operator=args[ found_logic[0] ];
+        if(prime_arg!==false && logic_seg!==false){result=true;}//suggest all is good for the API
+        var fail_reason='';
+
+        self.hook_ins.icallback('build', {
+                'args':args,
+                'result':result,
+                'prime_arg':prime_arg,
+                'logic_seg':logic_seg,
+                'found_args':found_args,
+                'fail_reason':fail_reason
+            }, function(newArgs){
+                //args=newArgs.args;
+                result=newArgs.result;
+                prime_arg=newArgs.prime_arg;
+                found_args=newArgs.found_args;
+                logic_seg=newArgs.logic_seg;
+                fail_reason=newArgs.fail_reason;
+            }
+        );
+
+        if(logic_seg===false){throw new Error('[LOGICBASE] Build failed due to no logic operator being passed.');return false;}
+        else if(logic_seg instanceof Array && logic_seg.length>1){throw new Error('[LOGICBASE] Build failed due to more than one logic operator being passed.');return false;}
+        else if(result!==true){throw new Error('[LOGICBASE] Build failed - '+(utils.basic_str(fail_reason)?utils.check_strip_last(fail_reason,'.'):'likely due to callback \'build\'')+'.');return false;}
+
+//console.log('logic_seg',(logic_seg===true?'TRUE':'FALSE'),' ---- args ',args,"\n","logic_seg[0]: ",logic_seg[0],"\n","prime_arg: ",prime_arg);
+        self.prime_arg=prime_arg;//set the schema!
+        self.operator=logic_seg[0];
         self.args=found_args;
         self.origin=args;
-        return true;
+
+        return true;//result!==true above means everything is fine!
     };
     logic.prototype.build_bypass=function(){
         var self=this;
+    };
+    logic.prototype.escOp=function(val){
+        var self=this;
+        if(val instanceof logicEscape){throw new Error('[LOGICBASE] Operator to be escaped is already escaped.');return false;}
+        else if(val!==null && typeof(val)!=='string' && typeof(val)!=='number' && typeof(val)!=='boolean'){throw new Error('[LOGICBASE] Operator to be escaped must be a primitive.');return false;}
+        return new logicEscape(val);
     };
 
     return logic;

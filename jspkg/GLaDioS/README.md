@@ -6,13 +6,15 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
 
 ## API
 -----------
-* `GLaDioS(` **options** *(object)* `)`: *returns* `GLaDioS instance`
+* `GLaDioS(` **options** *(object)*, **root** *(object)* `)`: *returns* `GLaDioS instance`
 
   **Constructor Function**
 
   `options` contains index keys of the initial set of callbacks. All `options` callbacks are both pass through `GLaDioS.register()` and `GLaDioS.add()`
 
-  **Example**: `myGLaDioS = new GLaDioS({'init':function(argIn){}, 'destroy':function(argIn){});`
+  `root` *(optional)* the default 'this' when using ES5 `function.apply(this,[]);` (first argument in `function.apply`) when used in `GLaDioS.icallback()`.
+
+  **Example**: `myGLaDioS = new GLaDioS({'init':function(argIn){}, 'destroy':function(argIn){}}, this);`
 
 * `GLaDioS.has(` **key** *(string)* `)`: *returns* `boolean [true|false]`
 
