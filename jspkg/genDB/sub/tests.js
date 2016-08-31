@@ -16,7 +16,7 @@ module.exports = function(genDB_obj, where_obj, _, utils, merge){//dependancies 
             //test negative version
             var result_neg=true;
             try{
-                result_neg=logic_not.build(col, 'NOT('+use_op+')', 5,10,15,20);
+                result_neg=logic_not.build(col, '!('+use_op+')', 5,10,15,20);
             }catch(e){
                 errstr="[TEST_BUILD_LEAST] Could not build '!"+use_op+"'\n"+e.toString();
                 do_err(errstr);

@@ -64,7 +64,8 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             	var self=this,
                     results=[],
             		has_callback=self.has_callback(keyIn);
-                if(typeof(nextFunc)!=='undefined' && typeof(nextFunc)!=='function'){throw new Error('[GLaDioS] Calling icallback for \''+keyIn+'\' third argument is not a function.');}
+                if(typeof(nextFunc)!=='undefined' && typeof(nextFunc)!=='function'){throw new Error('[GLaDioS] Calling icallback for \''+keyIn+'\' third argument is not a function (or empty/undefined).');}
+                if(!has_callback && !self.has(keyIn)){throw new Error("[GLaDioS] icallback called an invalid callback '"+keyIn+"'.");}
 
             	if(has_callback){
                     for(var c=0;c<self.plugin[keyIn].tasks.length;c++){
@@ -122,6 +123,17 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             this.__defineGetter__('root', root_callback_get);
         }else{
             Object.defineProperty(this, 'root', {/*'set': root_callback_set, */'get': root_callback_get});
+        }
+
+        var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
+        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
+            this.__defineGetter__('silent', function(){return silent_obj._val;});
+        }else{
+            Object.defineProperty(this, 'silent', {
+            //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
+            'get': function(){return silent_obj._val;}//getter
+            });
         }
 		self_init.apply(this, [opts]);//start! self_init that passes the 'this' context through
 	};

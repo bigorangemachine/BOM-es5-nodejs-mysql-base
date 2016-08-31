@@ -19,16 +19,18 @@ module.exports = function(_, utils, merge){
 
     function comparision(opts){
         if(!opts){opts={};}
-        for(var s in schema){
+        for(var s in schema){//no other schema treatment needed!
             if(utils.obj_valid_key(schema, s)){this[s]=schema[s];}}
 
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
             'validate': (typeof(opts.hook_ins.validate)==='function'?opts.hook_ins.validate:false),
-            'build': (typeof(opts.hook_ins.build)==='function'?opts.hook_ins.build:false)
+            'build': (typeof(opts.hook_ins.build)==='function'?opts.hook_ins.build:false),
+            'adhere': (typeof(opts.hook_ins.adhere)==='function'?opts.hook_ins.adhere:false)
         }, this);
-        this.hook_ins.change_text('validate', '[LOGICBASE] When validating self/schema');
-        this.hook_ins.change_text('build','[LOGICBASE] When building a logic operator using the schema');
+        this.hook_ins.change_text('validate', '[COMPARISION] When validating self/schema');
+        this.hook_ins.change_text('build','[COMPARISION] When building a logic operator using the schema');
+        this.hook_ins.change_text('adhere','[COMPARISION] When adhereing (converting to string segment) a comparision operator');
 
         //this.xxxxx={'limit':{'row_count':(typeof(opts)!=='undefined' && typeof(opts.xxxxx)==='number'?opts.xxxxx:9000)}};
 		self_init.apply(this);//start! self_init that passes the 'this' context through
@@ -88,7 +90,7 @@ module.exports = function(_, utils, merge){
                 'comp_op':comp_op,
                 'result':result,
                 'fail_reason':fail_reason
-            }, function(newArgs){comp_op
+            }, function(newArgs){
                 comp_op=newArgs.comp_op;
                 result=newArgs.result;
                 fail_reason=newArgs.fail_reason;
@@ -100,6 +102,15 @@ module.exports = function(_, utils, merge){
         self.origin=args;
 
         return true;
+    };
+    comparision.prototype.adhere=function(schemaIn){
+        var self=this,
+            data=(typeof(schemaIn)!=='undefined'?schemaIn:self),
+            output=data.comparison_op;
+
+        self.hook_ins.icallback('adhere', {'output':output,'data':data}, function(newArgs){output=newArgs.output;});
+
+        return self.comparison_op;
     };
 
     return comparision;

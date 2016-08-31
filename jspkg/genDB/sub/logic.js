@@ -3,11 +3,39 @@ module.exports = function( _, utils, merge){//dependancies
     //private dependancies
     var GLaDioS=require('../../GLaDioS')(_, utils, merge);
 
-    function logicEscape(val){
-        this.the_val=val;
+    function logicEscape(root, val){
+        var obj_whitelist=[Date];
+        root.hook_ins.icallback('escape_whitelist', {'obj_whitelist':obj_whitelist}, function(nArgs){obj_whitelist=nArgs.obj_whitelist;});
+        obj_whitelist.forEach(function(v,i,arr){obj_whitelist[i]=v.name;});
+
+        if(val!==null && typeof(val)!=='string' && typeof(val)!=='number' && typeof(val)!=='boolean' && !(typeof(val)==='object' && _.indexOf(obj_whitelist, val.constructor.name)>=0)){throw new Error('[LOGICBASE] Operator to be escaped must be a primitive.');}
+        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
+            this.__defineGetter__('root', function(){return root;});
+            this.__defineGetter__('_val', function(){return val;});
+        }else{
+            Object.defineProperty(this, 'root', {
+            //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
+            'get': function(){return root;}//getter
+            });
+            Object.defineProperty(this, '_val', {
+            //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
+            'get': function(){return val;}//getter
+            });
+        }
+        this['']="("+this._val.constructor.name+(typeof(this._val)==='object'?" - "+typeof(this._val):'')+") "+ this._val.toString();//just for debugging :D
     }
     logicEscape.prototype.toString=function(){
-        return this.the_val.toString();
+        var self=this,root=self.root,escape_str=self._val;
+        escape_str=(escape_str instanceof Date?escape_str.getTime():escape_str);
+        root.hook_ins.icallback('escape', {'escape_str':escape_str}, function(nArgs){escape_str=nArgs.escape_str;});
+        return (typeof(escape_str)!=='string'?escape_str.toString():escape_str);
+    }
+    logicEscape.prototype.typeof=function(){
+        return typeof(this.get());
+    };
+    logicEscape.prototype.get=function(){
+        return this._val;
     };
 
     var bypass_schema={
@@ -53,21 +81,38 @@ module.exports = function( _, utils, merge){//dependancies
             'get': function(){return operator_index;}//getter
             });
         }
+opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
+        var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
+        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
+            this.__defineGetter__('silent', function(){return silent_obj._val;});
+        }else{
+            Object.defineProperty(this, 'silent', {
+            //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
+            'get': function(){return silent_obj._val;}//getter
+            });
+        }
 
         for(var s in schema){//set schema default
-            if(utils.obj_valid_key(schema, s)){this[s]=schema[s];}}
+            if(utils.obj_valid_key(opts, s)){this[s]=opts[s];}}
 
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
             'validate_args': (typeof(opts.hook_ins.validate_args)==='function'?opts.hook_ins.validate_args:false),
             'validate_op': (typeof(opts.hook_ins.validate_op)==='function'?opts.hook_ins.validate_op:false),
             'validate': (typeof(opts.hook_ins.validate)==='function'?opts.hook_ins.validate:false),
-            'build': (typeof(opts.hook_ins.build)==='function'?opts.hook_ins.build:false)
+            'build': (typeof(opts.hook_ins.build)==='function'?opts.hook_ins.build:false),
+            'adhere': (typeof(opts.hook_ins.adhere)==='function'?opts.hook_ins.adhere:false),
+            'escape': (typeof(opts.hook_ins.escape)==='function'?opts.hook_ins.escape:false),
+            'escape_whitelist': (typeof(opts.hook_ins.escape_whitelist)==='function'?opts.hook_ins.escape_whitelist:false)
         }, this);
         this.hook_ins.change_text('validate_args', '[LOGICBASE] When args require extra validation');
         this.hook_ins.change_text('validate_op', '[LOGICBASE] When operators require extra validation');
         this.hook_ins.change_text('validate', '[LOGICBASE] When validating self/schema');
         this.hook_ins.change_text('build','[LOGICBASE] When building a logic operator using the schema');
+        this.hook_ins.change_text('adhere','[LOGICBASE] When adhereing (converting to string segment) a logic operator');
+        this.hook_ins.change_text('escape','[LOGICBASE] When escapeing (converting to string segment) a logic segment');
+        this.hook_ins.change_text('escape_whitelist','[LOGICBASE] When valdiating an escapeing; you can extend the list of object constructors that are allowed');
 
     }
     logic.prototype.validate=function(schemaIn){
@@ -110,9 +155,9 @@ console.log("UNTESTED - found_escape: ",found_escape);
             result_data={};
         if(self.validate_logic_op(logicObj, result_data)){
             if(arguments.length<2 || (typeof(args)==='object' && !args.length>1)){
-                throw new Error('[LOGICBASE] Raw String Injection is currently not allwed. Use second argument to pass an array.');
+                throw new Error("[LOGICBASE] Raw String Injection is currently not allwed. Use second argument to pass an array.");
             }else if(!utils.obj_valid_key(result_data, 'index')){
-                throw new Error('[LOGICBASE] Operator is not part of whitelist.');
+                throw new Error("[LOGICBASE] Operator is not part of whitelist.");
             }else{
                 return self.validate_logic_args(args, result_data.flat.key);
             }
@@ -125,9 +170,9 @@ console.log("UNTESTED - found_escape: ",found_escape);
         var self=this,
             operator_index=self.operator_index;
 //console.log('validate_logic_args - argsIn: ',argsIn);
-        if(typeof(argsIn)!=='object'|| !(argsIn instanceof Array) || argsIn.length===0){throw new Error('[LOGICBASE] First argument must be an array.');return false;}
-        else if(!utils.obj_valid_key(operator_index, logKey)){throw new Error('[LOGICBASE] Key \''+logKey+'\' not found in Operations List.');return false;}
-        else if(operator_index[logKey].args===false && argsIn.length>1){throw new Error('[LOGICBASE] Operator \''+logKey+'\' only allows for single argument; recieved \''+argsIn.length+'\'.');return false;}
+        if(typeof(argsIn)!=='object'|| !(argsIn instanceof Array) || argsIn.length===0){throw new Error("[LOGICBASE] First argument must be an array.");return false;}
+        else if(!utils.obj_valid_key(operator_index, logKey)){throw new Error("[LOGICBASE] Key '"+logKey+"' not found in Operations List.");return false;}
+        else if(operator_index[logKey].args===false && argsIn.length>1){throw new Error("[LOGICBASE] Operator '"+logKey+"' only allows for single argument; recieved '"+argsIn.length+"'.");return false;}
 
         var result=true;
 //console.log("-\t"+"validate_logic_args - result: ",result);
@@ -165,6 +210,7 @@ console.log("UNTESTED - found_escape: ",found_escape);
                     flat_index[i].args;     flat_index[i].comp_str;*/
             }
         }
+//console.log('=validate_op',utils.array_keys(self));
         self.hook_ins.icallback('validate_op', {'result':result,'results_obj':resultsObj,'flat_index':flat_index}, function(newArgs){
             result=newArgs.result;
             resultsObj=newArgs.results_obj;
@@ -256,7 +302,7 @@ console.log("UNTESTED - found_escape: ",found_escape);
             prime_arg=false,
             logic_seg=false;
         //clean & validate the requested logic object (self)
-        if(args.length<=1){throw new Error('[LOGICBASE] Build failed due to bad argument length('+args.length+').');return false;}
+        if(args.length<=1){throw new Error("[LOGICBASE] Build failed due to bad argument length("+args.length+").");return false;}
         for(var a=0;a<args.length;a++){
             if(typeof(args[a])==='string' && !(args[a] instanceof logicEscape) && self.validate_logic_op(args[a])){//our logic segment(s) - should only be one
 //console.log(a,'-args[a] ',args[a]);
@@ -292,9 +338,9 @@ console.log("UNTESTED - found_escape: ",found_escape);
             }
         );
 
-        if(logic_seg===false){throw new Error('[LOGICBASE] Build failed due to no logic operator being passed.');return false;}
-        else if(logic_seg instanceof Array && logic_seg.length>1){throw new Error('[LOGICBASE] Build failed due to more than one logic operator being passed.');return false;}
-        else if(result!==true){throw new Error('[LOGICBASE] Build failed - '+(utils.basic_str(fail_reason)?utils.check_strip_last(fail_reason,'.'):'likely due to callback \'build\'')+'.');return false;}
+        if(logic_seg===false){throw new Error("[LOGICBASE] Build failed due to no logic operator being passed.");return false;}
+        else if(logic_seg instanceof Array && logic_seg.length>1){throw new Error("[LOGICBASE] Build failed due to more than one logic operator being passed.");return false;}
+        else if(result!==true){throw new Error("[LOGICBASE] Build failed - "+(utils.basic_str(fail_reason)?utils.check_strip_last(fail_reason,'.'):"likely due to callback 'build'")+".");return false;}
 
 //console.log('logic_seg',(logic_seg===true?'TRUE':'FALSE'),' ---- args ',args,"\n","logic_seg[0]: ",logic_seg[0],"\n","prime_arg: ",prime_arg);
         self.prime_arg=prime_arg;//set the schema!
@@ -307,11 +353,73 @@ console.log("UNTESTED - found_escape: ",found_escape);
     logic.prototype.build_bypass=function(){
         var self=this;
     };
+    logic.prototype.adhere=function(schemaIn){
+        var self=this,
+            operator_index=self.operator_index,
+            data=(typeof(schemaIn)!=='undefined'?schemaIn:self),
+            output='',
+            segments=[],
+            segment_arg_index=[],
+            seg_push=function(val,isArg){
+                segments.push(val);
+                if(isArg){segment_arg_index.push(segments.length-1);}
+            },
+            seg_build=function(){
+                output='',
+                segments.forEach(function(v,i,arr){output=output+(output.length>0?' ':'')+v.toString().trim();});
+            },
+            validate_result={},
+            is_valid=self.validate_logic_op(data.operator, validate_result),
+            op_rule=(typeof(validate_result.flat.key)!=='undefined'?validate_result.flat.key:false);
+if(!self.silent){console.warn("[LOGICBASE] how op_rule lookup was written quickly and generally untested.  This method should really be improved");}
+//console.log("\n========================\n",'data',data,"\n",'validate_result: ',validate_result,"\n",'operator_index: ',self.operator_index[op_rule],"\n","\n","\n");
+
+        var arg_sep=(validate_result.cleaned_input.is_func?', ':'AND ');
+        if(validate_result.cleaned_input.is_not){seg_push('!(');}
+        if(validate_result.cleaned_input.is_func){//assemble based on function
+            seg_push(self.clean_comp(operator_index[op_rule].base));
+            seg_push('(');
+            seg_push(data.prime_arg, true);
+        }else{
+            seg_push(data.prime_arg, true);
+            seg_push(' ');
+            seg_push(self.clean_comp(operator_index[op_rule].base));
+        }
+        if(data.args.length>0){
+            for(var a=0;a<data.args.length;a++){
+                if(a!=0){seg_push(arg_sep);}
+                var push_val=data.args[a];
+                if(push_val instanceof logicEscape){
+                    if(push_val.typeof()==='string'){
+                        push_val=push_val.toString();}
+                    else{
+                        push_val=push_val.get();}
+                }
+                seg_push(push_val, true);
+            }
+        }
+        if(validate_result.cleaned_input.is_func){//close off function args!
+            seg_push(')');
+        }
+        if(validate_result.cleaned_input.is_not){seg_push(')');}
+
+        //treat what we found!
+        seg_build();//populate output
+        var check_against={'str':output,'arr':segments.concat([])};//stringify()
+        self.hook_ins.icallback('adhere', {'output':output,'data':data,'segment_arg_index':segment_arg_index,'segments':segments,'validate_result':validate_result}, function(newArgs){
+            output=newArgs.output;
+            segments=newArgs.segments;
+        });
+        if(check_against.str!==output || check_against.arr.length!==segments.length || check_against.arr.join('')!==segments.join('')){//one of them was changed.  lets rebuild!
+            seg_build();//populate output
+        }
+        //all done!
+        return output;
+    };
     logic.prototype.escOp=function(val){
         var self=this;
         if(val instanceof logicEscape){throw new Error('[LOGICBASE] Operator to be escaped is already escaped.');return false;}
-        else if(val!==null && typeof(val)!=='string' && typeof(val)!=='number' && typeof(val)!=='boolean'){throw new Error('[LOGICBASE] Operator to be escaped must be a primitive.');return false;}
-        return new logicEscape(val);
+        return new logicEscape(self, val);
     };
 
     return logic;

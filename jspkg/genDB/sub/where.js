@@ -30,6 +30,7 @@ module.exports = function(_, utils, merge){
         };
 
     function whereBase(opts){
+        var self=this;
         opts=(typeof(opts)!=='undefined'?opts:{});
         var where_inst=where_schema,//private
             comparison_op_inst=comparisonOp,//private
@@ -44,8 +45,8 @@ module.exports = function(_, utils, merge){
         //transfer/validate
         where_inst=(typeof(opts.where_schema_instance)==='function'?opts.where_schema_instance:where_inst);
         comparison_op_inst=(typeof(opts.comparison_op_instance)==='function'?opts.comparison_op_instance:comparison_op_inst);
-        instance_validate(where_inst, 'where_schema_instance', ['validate','build']);
-        instance_validate(comparison_op_inst, 'comparison_op_instance', ['validate','build']);
+        instance_validate(where_inst, 'where_schema_instance', ['validate','build','adhere']);
+        instance_validate(comparison_op_inst, 'comparison_op_instance', ['validate','build','adhere']);
 
         //private variables - need to be objects
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
@@ -72,7 +73,11 @@ module.exports = function(_, utils, merge){
             else{throw new Error("[WHEREBASE] Pushing to where_list contains invalid value.");}
         };
         var where_list_unset=function(){
-            where_list=[];
+            where_list=[];//unset the local -> which is the readonly ;)
+            this.hook_ins.icallback('where_list_unset',{'list':[]},function(nArgs){
+                if(nArgs.list instanceof Array && nArgs.list.length>0){
+                    nArgs.list.forEach(function(v,i,arr){self.where_list.push(nArgs.list[i]);});}//should be empty just append :D - is read only so they have to push to 'list' anyways
+            });
         };
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
             //this.__defineSetter__('where_list', function(v){where_list=v;});
@@ -89,10 +94,17 @@ module.exports = function(_, utils, merge){
 //console.log('opts.hook_ins',opts.hook_ins);
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
+            'where_adhere': (typeof(opts.hook_ins.where_adhere)==='function'?opts.hook_ins.where_adhere:false),
+            'where_escape': (typeof(opts.hook_ins.where_escape)==='function'?opts.hook_ins.where_escape:false),
+            'where_list_unset': (typeof(opts.hook_ins.where_list_unset)==='function'?opts.hook_ins.where_list_unset:false),
             'where_build': (typeof(opts.hook_ins.where_build)==='function'?opts.hook_ins.where_build:false)
         }, this);
 //console.log('this.hook_ins',this.hook_ins.list(),'typeof(opts.hook_ins.where_build)',typeof(opts.hook_ins.where_build));
+        this.hook_ins.change_text('where_adhere', '[WHEREBASE] When adhereing a where segment');
+        this.hook_ins.change_text('where_escape', '[WHEREBASE] When escaping a where segment');
+        this.hook_ins.change_text('where_list_unset', '[WHEREBASE] When resetting the where chain');
         this.hook_ins.change_text('where_build', '[WHEREBASE] When building a where statement');
+
     }
     whereBase.prototype.push=function(pushArg,uniqueId,childIds){//comparisonOp,whereObj
         var self=this,
@@ -177,10 +189,43 @@ module.exports = function(_, utils, merge){
                 output.hook_ins.add('build',function(pkg){
                     self.hook_ins.icallback('where_build',pkg);
                 });
+                output.hook_ins.add('adhere',function(pkg){
+                    self.hook_ins.icallback('where_adhere',pkg);
+//console.log("adhere PKG",pkg);
+                });
+                output.hook_ins.add('escape',function(pkg){
+                    self.hook_ins.icallback('where_escape',pkg);
+//console.log("escape PKG",pkg);
+                });
             }
         }else{ // new comparisonOp() aka new comparison()
             output=new self.comparison_op_inst();
         }
+        return output;
+    };
+    whereBase.prototype.adhere=function(){
+        var self=this,
+            output='';
+        if(self.where_list.length===0){throw new Error("[WHEREBASE] Adhere has failed. Cannot assemble because the 'where list' is not an array.");return output;}
+        for(var w=0;w<self.where_list.length;w++){
+            var new_seg=self.where_list[w],
+                str='';
+
+            if(new_seg.schema instanceof self.comparison_op_inst || new_seg.schema instanceof self.where_inst){
+                str=new_seg.schema.adhere();
+            }else{//this should never happen!
+                throw new Error("[WHEREBASE] Adhere is at index '"+w+"' of wrong type '"+new_seg.schema.constructor.name+"'.");return output;
+            }
+            output=output + (output.length>0?' ':'') + str;
+        }
+        return output;
+    };
+
+    whereBase.prototype.column_seg=function(colObj){
+        var self=this,
+            output='';
+        if(typeof(colObj)==='undefined'){colObj=self;}
+        output=colObj.col_name;
         return output;
     };
     return whereBase;

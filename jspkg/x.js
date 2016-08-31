@@ -1,4 +1,4 @@
-//ES5
+
 module.exports = function(parentOOPmodule, _, utils, merge){//dependancies and parentOOP protoptype/classes
     var self_init=function(){//private methods
     };
@@ -12,11 +12,11 @@ module.exports = function(parentOOPmodule, _, utils, merge){//dependancies and p
         //private variables - need to be objects
         var private_obj={'private':'thing','baz':'foo'};
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            this.__defineSetter__('private_obj', function(v){private_obj=merge(true,{}, private_obj, v);});//setter -  remove for readonly!
+            this.__defineSetter__('private_obj', function(v){private_obj=merge(true,{}, private_obj, v);});
             this.__defineGetter__('private_obj', function(){return private_obj;});
         }else{
             Object.defineProperty(this, 'private_obj', {
-                'set': function(v){private_obj=merge(true,{}, private_obj, v);},//setter -  remove for readonly!
+                'set': function(v){private_obj=merge(true,{}, private_obj, v);},//setter
                 'get': function(){return private_obj;}//getter
             });
         }

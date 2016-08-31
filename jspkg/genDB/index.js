@@ -1,31 +1,53 @@
 
 module.exports = function(mysql, _, utils, merge){
-    var md5=require('md5');
+    var md5=require('md5'),
+        compareVersions=require('compare-versions');
 
-    var self_init=function(){
+
+    var self_init=function(opts){
             var self=this;
             self.add_schema({'col_name': 'id', 'is_null': false, 'is_base': true, 'size': 20, 'val_type': 'int', 'key_type': 'primary'});
             self.add_schema({'col_name': 'date_stamp', 'is_null': false, 'val_type': 'date', 'key_type': 'updatestamp'});
 
-        var where_obj=new whereBase({'hook_ins':{'where_build': self.column_where_hook()}}),
-            /*where_obj_set=function(v){//setter
-                where_obj=v;},*/
-            where_obj_get=function(){//getter
-                return where_obj;};
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('where_obj', where_obj_set);
-            this.__defineGetter__('where_obj', where_obj_get);
-        }else{
-            Object.defineProperty(this, 'where_obj', {
-            //'set': where_obj_set,
-            'get': where_obj_get
-            });
-        }
+            var where_obj=new whereBase({'hook_ins':{'where_build': self.column_build_hook(),'where_adhere': self.column_adhere_hook()}}),
+                /*where_obj_set=function(v){//setter
+                    where_obj=v;},*/
+                where_obj_get=function(){//getter
+                    return where_obj;};
+            if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+                //this.__defineSetter__('where_obj', where_obj_set);
+                this.__defineGetter__('where_obj', where_obj_get);
+            }else{
+                Object.defineProperty(this, 'where_obj', {
+                //'set': where_obj_set,
+                'get': where_obj_get
+                });
+            }
+
+opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
+            var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
+            if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+                //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
+                this.__defineGetter__('silent', function(){return silent_obj._val;});
+            }else{
+                Object.defineProperty(this, 'silent', {
+                //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
+                'get': function(){return silent_obj._val;}//getter
+                });
+            }
+
+            self.hook_ins.change_text('result', "[GENERICDB] When query triggers result 'on(result)' callback");
+            self.hook_ins.change_text('fields', "[GENERICDB] When query triggers fields 'on(fields)' callback");
+            self.hook_ins.change_text('end', "[GENERICDB] When query triggers end 'on(end)' callback");
+            self.hook_ins.change_text('error', "[GENERICDB] When query triggers error 'on(error)' callback");
+            self.hook_ins.change_text('done', "[GENERICDB] When query triggers final (finished) callback (custom)");
         };
 
     //statics
     var column_schema=require('./sub/column')(_, utils, merge),// sub-dependancies
         whereBase=require('./sub/where')(_, utils, merge),
+        genericDBResultStatus=require('./sub/resultModel')(_, utils, merge),
+        genericDBThrowResultStatus=require('./sub/resultThrow')(_, utils, merge),
         //\\ sub-dependancies
         GLaDioS=require('../GLaDioS')(_, utils, merge),
         table_schema={
@@ -36,14 +58,23 @@ module.exports = function(mysql, _, utils, merge){
         if(!opts){opts={};}
 
         //variables/settings
-        this.silent=(typeof(opts.silent)==='boolean'?opts.silent:false);
         this.allow_nolimit=true;
         this.sql_default={'limit':{'row_count':(typeof(opts.row_count)==='number'?opts.row_count:10)}};
         this.table_index=merge(true,{},{'sample_tbl':table_schema});
         this.table_index.sample_tbl.table_name='sample_tbl';
+        // this.table_index=merge(true,{},{'log':table_schema});
+        // this.table_index.log.table_name='log';
         this.exec_valid_query=(typeof(opts.exec_valid_query)==='boolean'?opts.exec_valid_query:false);
+        opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
+        this.hook_ins=new GLaDioS({
+            'result': (typeof(opts.hook_ins.result)==='function'?opts.hook_ins.result:false),
+            'fields': (typeof(opts.hook_ins.fields)==='function'?opts.hook_ins.fields:false),
+            'end': (typeof(opts.hook_ins.end)==='function'?opts.hook_ins.end:false),
+            'error': (typeof(opts.hook_ins.error)==='function'?opts.hook_ins.error:false),
+            'done': (typeof(opts.hook_ins.done)==='function'?opts.hook_ins.done:false)
+        });
 
-        self_init.apply(this);//start! self_init that passes the 'this' context through
+        self_init.apply(this, [opts]);//start! self_init that passes the 'this' context through
     }
 
     genericDB.prototype.table_schema=function(){
@@ -60,30 +91,51 @@ module.exports = function(mysql, _, utils, merge){
 
         if(typeof(new_column.col_name)!=='string' || !utils.basic_str(new_column.col_name)){throw new Error("Column name is invalid");return false;}
         else if(utils.array_object_search(self.table_index[tableName].schema, 'col_name', new_column.col_name).length!==0){throw new Error("Column name '"+new_column.col_name+"' is already existing");return false;}
-console.log('tableName',tableName,new_column.constructor.name);
         self.table_index[tableName].schema.push(new_column);
         return new_column;
     };
-    genericDB.prototype.escape=function(valIn, colObj, tableName){
-        var args=[];
-        arguments.forEach(function(v,i,arr){args.push(v);});//safer to transfer
-        this.escape_val.apply(this,args);
+    genericDB.prototype.escape=function(valIn, colObj, tableName){//aliased function
+        for(var args=[],e=0;e<arguments.length;e++){args.push(arguments[e]);}//safer to transfer object to array
+        return this.escape_val.apply(this,args);
     };
     genericDB.prototype.escape_val=function(valIn, colObj, tableName){
         var self=this,
             output='',
             result=true;
         tableName=(typeof(tableName)!=='string'?self.main_table():tableName);
+        colObj=(typeof(colObj)==='string'?self.get_column(colObj, tableName):colObj);
+
         try{
-            output=self.clean_val(valIn, (typeof(colObj)==='string'?self.get_column(colObj, tableName):colObj));
+            output=colObj.clean(valIn);//standarize the return
         }catch(e){
             result=false;
             if(!self.silent){
                 console.warn("[GENERICDB] escaping value generated errors. "+e.toString());
             }
         }
-        if(result===false && ouput===false){throw new Error("[GENERICDB] could not clean input.");return false;}
-        output=(output!==null?mysql.escape(output):'NULL');
+
+        if(result===false && output===false){throw new Error("[GENERICDB] could not clean input.");return false;}
+
+        var now_reserved=['CURRENT_TIMESTAMP','NOW()'],
+            is_num=(typeof(output)==='number' && (colObj.val_type.toLowerCase()==='int' || colObj.val_type.toLowerCase()==='float')?true:false);
+        now_reserved.forEach(function(v,i,arr){now_reserved[i]=v.toUpperCase();});
+        if(colObj.is_null && (output===null || typeof(output)==='undefined' || (is_num && isNan(is_num)) )){//some kind of 'NULL' to mysql
+            output='NULL';}
+        else if(colObj.val_type.toLowerCase()==='date'){
+            var now_stamp=(compareVersions(mysql.version,'5.5')===1?'CURRENT_TIMESTAMP':'NOW()');//greater 5.5 likes CURRENT_TIMESTAMP - less 5.5 likes NOW()
+            if(output instanceof Date){//dates need conversion!
+                output='FROM_UNIXTIME(' + (Math.floor(output.getTime()/1000)).toString() + ')';}
+            else if(typeof(output)==='string' && _.indexOf(now_reserved, output.toUpperCase())!==-1){//already converted to now stamp -  version patch
+                output=now_stamp;}
+            else if(colObj.key_type.toLowerCase()==='createstamp' || colObj.key_type.toLowerCase()==='updatestamp'){//if its not a string and its a now stamp... WTF?!
+                output=now_stamp;}
+            else{//something is wrong!
+                output=mysql.escape(output.toString());}
+        }else if(is_num){//escape as a number! - isNaN covered above!
+            output=output.toString();
+        }else{//WTF!? or a string :D
+            output=mysql.escape(output);//adds quotation marks!
+        }
         return output;
     };
     genericDB.prototype.is_valid_table=function(tableName){
@@ -168,7 +220,49 @@ console.log('tableName',tableName,new_column.constructor.name);
     genericDB.prototype.column_schema_write=function(colObj, tableName, dataObj){
         var self=this,output=[];
     };
-    genericDB.prototype.column_where_hook=function(){//returns a binded function
+    genericDB.prototype.column_adhere_hook=function(){//returns a binded function
+        var self=this;
+        //this is the hook for logic adhere
+//console.log('column_adhere_hook ',arguments);
+        return function(pkg){//aka new where/logic().adhere() callback
+//console.log('============ column_adhere_hook -function ============',pkg);
+            var args=[],cols=[];
+            for(var s=0;s<pkg.segments.length;s++){
+                if(pkg.segments[s] instanceof column_schema){
+                    cols.push(s);
+                }
+                if(_.indexOf(pkg.segment_arg_index,s)!==-1){
+                    args.push(s);
+                }
+            }
+
+            if(args.length>0){
+                pkg.output='';
+                for(var a=0;a<args.length;a++){//for every argument
+                    var arg=pkg.segments[ args[a] ],
+                        new_val=arg,
+                        do_escape=false;
+                    for(var c=0;c<cols.length;c++){//every column (found)
+                        var col=pkg.segments[ cols[c] ];
+//console.log('column_adhere_hook ['+a+', '+c+'] ------- arg: ',arg,"\n\n",'col ',col,"\n",'col.constructor.name ',col.constructor.name,"\n","column_schema: ",column_schema.name,"\n\n");
+                        if(!(arg instanceof column_schema)){//this should always be true
+                            do_escape=true;
+                        }else{
+                            if(arg instanceof column_schema && col instanceof column_schema && args[a]!==cols[c]){
+                                if(!self.silent){console.warn("[GENERICDB] column_adhere_hook - Not supported: double column as arguments.");}
+                            }else{
+                                new_val="`"+self.where_obj.column_seg(arg)+"`";
+                            }
+                        }
+                    }
+                    if(do_escape){new_val=self.escape(arg, (pkg.data.prime_arg instanceof column_schema?pkg.data.prime_arg:cols[0]));}
+                    pkg.segments[ args[a] ]=new_val;
+                }
+            }
+            //self.clean(arg[a],col[c]);
+        };
+    };
+    genericDB.prototype.column_build_hook=function(){//returns a binded function
         var self=this;
         //this is the hook for logic build - we're going to cause a problem if any of the values of the logic don't match type
         return function(pkg){//aka new logic().build() callback
@@ -207,186 +301,189 @@ console.log('tableName',tableName,new_column.constructor.name);
                 if(has_col_arg===false){
                     pkg.fail_reason=pkg.fail_reason+(pkg.fail_reason.length>0?"\n":'')+"No arguments provided contain a column.  One arg must be of type '"+column_schema.prototype.constructor.name+"'.";
                 }
-            }.bind(self);
+            };
     };
 
-    genericDB.prototype.apply_callback=function(res, callbacks, next, debugVar){// { 'end':function(){},'result':function(row){},'fields':function(fields){},'error':function(err){} }
+    genericDB.prototype.apply_callback=function(res, callbacksIn, nextFunc, debugVar){// { 'end':function(){},'result':function(row){},'fields':function(fields){},'error':function(err){},'done':function(events, data){} }
 //console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++=====apply_callback===++++++++++++++++++\n++++++++++++++++++\n\n\n\n");
         var self=this,
+            // debugVar=(debugVar===true?true:false),
+            callbacks={'result':false,'fields':false,'end':false,'error':false,'done':false},
             args=[],
+            events=[],
+            last_events_len=events.length,
             bool_next=false,
-            do_next=function(){
-//console.log('NEXT CHECK ',typeof(next),' && ',bool_next);
-                if(typeof(next)==='function' && bool_next===false){
-                    if(arguments.length>0){
-                        for(var i=0;i<arguments.length;i++){args.push(arguments[i]);};}
-                    bool_next=true;//WORRIED ABOUT RACE CONDITION
-                    next.apply(self,args);
+            do_next_immediate_id=false,
+            do_next=function(){//do not advance unless a complete flag (end or error) is present
+//console.log('NEXT CHECK ',typeof(nextFunc),' && ',bool_next);
+                var found_types=[];
+                events.forEach(function(v,i,arr){found_types.push(v.type);});//transfer
+                if(last_events_len!=events.length){//we want to do the below when we're done with the events being appeneded
+                    queue_next();
+                    last_events_len=events.length;
+                    return;
                 }
-            };
-        if(typeof(res)!=='object'){return false;}//no data
-        if(typeof(callbacks)==='function'){callbacks={'callback':callbacks};}//if passed lazily
-        if(typeof(next)==='function'){for(var i=0;i<arguments.length;i++){if(i!==2){/* ignore next */args.push(arguments[i]);}};}
+                last_events_len=events.length;
 
-        for(var k in callbacks){//callback system within
-            if(k==='callback'){continue;}
-            if(utils.obj_valid_key(callbacks,k) && !utils.obj_valid_key(callbacks,'on'+k)){
-                if(k.toLowerCase().indexOf('on')!==0){//doesn't start with 'on'?!
-                    callbacks['on'+k]=callbacks[k];
+                var has_end=(_.indexOf(found_types, 'end')!==-1?true:false),
+                    has_err=(_.indexOf(found_types, 'error')!==-1?true:false),
+                    has_result=(_.indexOf(found_types, 'result')!==-1?true:false);
+                if(has_end===false){//not completed!
+                    queue_next();//check again later!
+                    return;}
+                if(do_next_immediate_id!==false){//we're finally done! - keep the threads clean! Garbage Collection ;)
+                    clearImmediate(do_next_immediate_id);
+                    do_next_immediate_id=false;
                 }
-            }
+                if(bool_next===false){
+                    bool_next=true;//LOCKOUT THE RACE CONDITION!!!
+                    //generic callback
+                    self.hook_ins.icallback('done',{'events':events,'callbacks':callbacks,'res':res,'next':nextFunc,'debug':debugVar},function(nArgs){
+                        nextFunc=nArgs.next;
+                        events=nArgs.events;//debugVar=nArgs.debug;
+                    });
+                    var out_args=[events], out_data=[];
+                    if(has_err===true){events.forEach(function(v,i,arr){if(v.type==='error'){out_data.push(v.args[0]);}});}
+                    else if(has_result===true){events.forEach(function(v,i,arr){if(v.type==='result'){out_data.push(v.args[0]);}});}
+                    else{events.forEach(function(v,i,arr){if(v.type==='fields'){out_data.push(v.args[0]);}});}
+
+                    if(typeof(callbacks.done)==='function'){
+                        var status_obj=new genericDBResultStatus({
+                                'is_success':(has_err===false?true:false),// successful! YEA!
+                                'status':(has_err===false?'success':'fail'), //has rows/error! Give the rows/error!
+                                'info':{'context':out_data}
+                            });
+
+                        callbacks.done.apply(self, new genericDBThrowResultStatus(res, status_obj, events, debugVar).asApply());
+                    }
+                    if(typeof(nextFunc)==='function'){nextFunc.apply(self, out_args);}
+                }
+            },
+            queue_next=function(){//look again later ('setImmediate' like a settimeout)! - don't override the other task
+                do_next_immediate_id=(do_next_immediate_id===false?setImmediate(do_next):do_next_immediate_id);
+            },
+            ready_next=function(typeIn, argsIn){
+                var _args=[];
+                for(var a=0;a<argsIn.length;a++){_args.push(argsIn[a]);}
+                events.push({'type':typeIn,'args':_args});
+                do_next();
+            };
+        if(typeof(callbacksIn)==='function'){callbacksIn={'done':callbacksIn};}//if passed lazily
+        for(var k in callbacksIn){//callback system within
+            if(utils.obj_valid_key(callbacks,k)){callbacks[k]=callbacksIn[k];}}
+
+        if(typeof(res)!=='object'){ready_next('end',[]);return false;}//no data - end always happens
+        if(typeof(nextFunc)!=='function' && typeof(callbacksIn.done)!=='function'){
+            ready_next('end',[]);
+            new Error("[GENERICDB] Apply Callback has no callback.  Please provide either 'done' callback (2nd argument) or a 'next' callback (3rd argument)");
+            return false;
         }
 
         res.on('error', function(err) {
 //console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++      error      ++++++++++++++++++\n++++++++++++++++++\n\n\n\n");
             // Handle error, an 'end' event will be emitted after this as well
-            if(typeof(callbacks)=='object' && (typeof(callbacks.onerror)==='function' || typeof(callbacks.callback)==='function')){
-                if(typeof(callbacks.onerror)==='function'){
-                    callbacks.onerror.apply(self,[res,err,debugVar]);
-                }
-                 if(typeof(callbacks.callback)==='function'){
-                    callbacks.callback.apply(self,['error',res,err,debugVar]);
-                }
-            }
-            do_next(err);
+            self.hook_ins.icallback('error',{'callbacks':callbacks,'res':res,'err':err,'next':nextFunc,'debug':debugVar},function(nArgs){
+                nextFunc=nArgs.next;
+                res=nArgs.res;
+                err=nArgs.err;//debugVar=nArgs.debug;
+            });
+            if(typeof(callbacks.error)==='function'){callbacks.error.apply(self,[res,err,debugVar]);}
+            ready_next('error', arguments);
         })
         .on('fields', function(fields) {
 //console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++      fields      ++++++++++++++++++\n++++++++++++++++++\n\n\n\n");
             // the field packets for the rows to follow
-            if(typeof(callbacks)=='object' && (typeof(callbacks.onfields)==='function' || typeof(callbacks.callback)==='function')){
-                if(typeof(callbacks.onfields)==='function'){
-                    callbacks.onfields.apply(self,[res,fields,debugVar]);
-                }
-                 if(typeof(callbacks.callback)==='function'){
-                    callbacks.callback.apply(self,['fields',res,fields,debugVar]);
-                }
-            }
-            do_next(fields);
-    //        var the_args=[fields];
-    //        for(var a=0;a<arguments.length;a++){the_args.push(arguments[a]);}
-    //        do_next.apply(self,the_args);
+            self.hook_ins.icallback('fields',{'callbacks':callbacks,'res':res,'fields':fields,'next':nextFunc,'debug':debugVar},function(nArgs){
+                nextFunc=nArgs.next;
+                res=nArgs.res;
+                fields=nArgs.fields;//debugVar=nArgs.debug;
+            });
+            if(typeof(callbacks.fields)==='function'){callbacks.fields.apply(self,[res,fields,debugVar]);}
+            ready_next('fields', arguments);
         })
         .on('result', function(row) {
 //console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++      result      ++++++++++++++++++\n++++++++++++++++++\n\n\n\n");
-    /*
-            // Pausing the connnection is useful if your processing involves I/O
-            mysql.pause();
-
-            processRow(row, function() {
-                mysql.resume();
+            self.hook_ins.icallback('result',{'callbacks':callbacks,'res':res,'row':row,'next':nextFunc,'debug':debugVar},function(nArgs){
+                nextFunc=nArgs.next;
+                res=nArgs.res;
+                row=nArgs.row;//debugVar=nArgs.debug;
             });
-            */
-            if(typeof(callbacks)=='object' && (typeof(callbacks.onresult)==='function' || typeof(callbacks.callback)==='function')){
-                if(typeof(callbacks.onresult)==='function'){
-                    callbacks.onresult.apply(self,[res,row,debugVar]);
-                }
-                 if(typeof(callbacks.callback)==='function'){
-                    callbacks.callback.apply(self,['result',res,row,debugVar]);
-                }
-            }
-            do_next(row);
+            if(typeof(callbacks.result)==='function'){callbacks.result.apply(self,[res,row,debugVar]);}
+            ready_next('result', arguments);
         })
         .on('end', function() {
 //console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++      end      ++++++++++++++++++\n++++++++++++++++++\n\n\n\n");
             // all rows have been received
-            if(typeof(callbacks)=='object' && (typeof(callbacks.onend)==='function' || typeof(callbacks.callback)==='function')){
-                if(typeof(callbacks.onend)==='function'){
-                    callbacks.onend.apply(self,[res,debugVar]);
-                }
-                 if(typeof(callbacks.callback)==='function'){
-                    callbacks.callback.apply(self,['end',res,debugVar]);
-                }
-            }
-            do_next();
+            self.hook_ins.icallback('end',{'callbacks':callbacks,'res':res,'next':nextFunc,'debug':debugVar},function(nArgs){
+                nextFunc=nArgs.next;
+                res=nArgs.res;//debugVar=nArgs.debug;
+            });
+            if(typeof(callbacks.end)==='function'){callbacks.end.apply(self,[res,debugVar]);}
+            ready_next('end', arguments);
         });
     };
 
-    genericDB.prototype.find=function(dataObj,callbacks, doDebug){
-        var self=this;
-//console.log('dataObj',dataObj);
+    genericDB.prototype.find=function(dataObj,callbacks, doDebug){//returns function only!
+        var self=this,
+            context_key=self.main_table();
+//console.log('find() dataObj',dataObj);
         if(typeof(dataObj)!=='object'){return false;}//no data
-        if(typeof(callbacks)==='function'){callbacks={'callback':callbacks};}//if passed lazily
+        if(typeof(callbacks)==='function'){callbacks={'done':callbacks};}//if passed lazily
         var sql_select='SELECT ',
             count=0,
-            w_count=0,
-            select_cols=[];
-        for(var c=0;c<self.table_index[tableName].length;c++){
-            var key=self.table_index[tableName][c];
+            select_cols=[],
+            all_cols=self.column_schema_cols('all', context_key);
+        for(var c=0;c<all_cols.length;c++){
+            var key=all_cols[c];
             if(utils.obj_valid_key(dataObj,key)){
                 if(count!=0){sql_select=sql_select+', ';}
-                sql_select=sql_select+'`sample_tbl`.'+ key +' AS '+key;
-                select_cols.push(key);
-                count++;
-            }else if(utils.obj_valid_key(self.version_obj,key)){
-                if(count!=0){sql_select=sql_select+', ';}
-                sql_select=sql_select+'`sample_tbl`.'+ key +' AS '+key;
+                sql_select=sql_select+'`'+context_key+'`.'+ key +' AS '+key;
                 select_cols.push(key);
                 count++;
             }
         }
-        if(count===0){return false;}
-        //count=0;//reuse - do not reset!
 
+        var base_keys=self.column_schema_cols('base', context_key),
+            sql_from='FROM `'+context_key+'` '
 
-        var base_keys=['id', 'version_id', 'response_code', 'url', 'cache_file', 'content_md5', 'get_vars','post_vars','method',
-            'date_created', 'date_crawled', 'date_modified'],
-            sql_from='FROM `sample_tbl` ',
-            sql_where='';
-
-        for(var c=0;c<self.table_index[tableName].length;c++){
-            var key=self.table_index[tableName][c];
-            if(_.indexOf(base_keys,key)!==-1 && _.indexOf(select_cols,key)===-1){//if base key and unused
-                if(count!=0){sql_select=sql_select+', ';}
-                sql_select=sql_select+'`sample_tbl`.'+ key +' AS '+key;
-                select_cols.push(key);
-                count++;
-            }
-            if(utils.obj_valid_key(dataObj,key) && _.indexOf(self.table_index[tableName],key)!==-1){
-                if(typeof(dataObj[key])==='string' || typeof(dataObj[key])==='number'){
-                    if(w_count!=0){sql_where=sql_where+'AND ';}
-                    sql_where=sql_where+'`sample_tbl`.'+key+' = '+ mysql.escape(dataObj[key]) +' ';
-                    w_count++;
-                }else if(key==='version_id' && utils.obj_valid_key(self.version_obj,'id')){
-                    if(w_count!=0){sql_where=sql_where+'AND ';}
-                    sql_where=sql_where+'`sample_tbl`.'+key+' = '+ mysql.escape(self.version_obj[key]) +' ';
-                    w_count++;
-                }else if(typeof(dataObj[key])==='object' && dataObj[key] instanceof Array && dataObj[key].length>0){
-                    if(w_count!=0){sql_where=sql_where+'AND ';}
-                    sql_where=sql_where+'(';
-                    for(var i=0;i<dataObj[key].length;i++){
-                        if(typeof(dataObj[key][i])==='string' || typeof(dataObj[key][i])==='number'){
-                            if(i!=0){sql_where=sql_where+' OR ';}
-                            sql_where=sql_where+'`sample_tbl`.'+key+' = '+ mysql.escape(dataObj[key][i]);
-                        }
-                    }
-                    sql_where=sql_where+') ';
-                    w_count++;
-                }else if(dataObj[key]===null){
-                    w_count++;
-                    continue;
+        var transform_obj={'where_sql':'','count':0};
+        //try{
+            self.where_obj.where_list_unset();//reset the chain
+            transform_obj=self.where_transform(dataObj, context_key, function(key, whereCount){
+                if(_.indexOf(base_keys,key)!==-1 && _.indexOf(select_cols,key)===-1){//if base key and unused
+                    if(count!=0){sql_select=sql_select+', ';}
+                    sql_select=sql_select+'`'+context_key+'`.'+ key +' AS '+key;
+                    select_cols.push(key);
+                    count++;
                 }
-            }
+
+            });
+        // }catch(e){
+        //     if(!self.silent){console.warn("[GENERICDB] Where build in 'find' failed. "+e.toString());}
+        // }
+        var sql_where=transform_obj.where_sql;
+
+        if(transform_obj.count===0 || count===0){
+if(doDebug){console.log('====== '+context_key+' ||| cont ZERO: transform_obj.count: '+transform_obj.count+'  count: '+count+'  =======');}
+            var fail_func=function(){
+                var status_obj=new genericDBResultStatus({'is_success':false,'info':{'input':dataObj,'query_segments':[sql_select,sql_where]}});
+                callbacks.done.apply(self,new genericDBThrowResultStatus(false, status_obj).asApply());
+            };
+            return fail_func.bind(self);
         }
-        if(w_count===0 || count===0){
-console.log('====== sample_tbl ||| cont ZERO: w_count: '+w_count+'  count: '+count+'  =======');
-            return false;}
 
         var row_count=(utils.obj_valid_key(dataObj,'limit') && typeof(dataObj.limit)==='object' && utils.obj_valid_key(dataObj.limit,'row_count')?dataObj.limit.row_count:self.sql_default.limit.row_count),
-            sql_limit=self.build_limit(dataObj),
-            sql_order_by=(utils.obj_valid_key(dataObj,'order_by')?'ORDER BY '+dataObj.order_by:'');// && _.indexOf(self.table_index[tableName], dataObj.order_by)!==-1 //utils.check_strip_last(utils.check_strip_last(dataObj.order_by,' DESC'),' ASC')
-        sql_order_by=(utils.obj_valid_key(dataObj,'group_by')?'GROUP BY '+dataObj.group_by + ' ' + sql_order_by:sql_order_by);// && _.indexOf(self.table_index[tableName], dataObj.group_by)!==-1
+            sql_limit=sql_limit=self.build_limit(dataObj),
+            sql_order_by=(utils.obj_valid_key(dataObj,'order_by')?'ORDER BY '+dataObj.order_by:'');// && _.indexOf(all_cols, dataObj.order_by)!==-1 //utils.check_strip_last(utils.check_strip_last(dataObj.order_by,' DESC'),' ASC')
+        sql_order_by=(utils.obj_valid_key(dataObj,'group_by')?'GROUP BY '+dataObj.group_by + ' ' + sql_order_by:sql_order_by);// && _.indexOf(all_cols, dataObj.group_by)!==-1
+if(doDebug){console.log('find() SEGMENTED SQL ',dataObj,"\n",'sql_select',sql_select+"\n",'sql_from',sql_from+"\n",'sql_where',sql_where+"\n",'sql_order_by',sql_order_by+"\n",'sql_limit',sql_limit);}
 
-        var sql_full=sql_select + ' ' + sql_from + (utils.basic_str(sql_where)?'WHERE '+ sql_where:'') + sql_order_by + (utils.basic_str(sql_limit)?' ' + sql_limit:'') + ';',
-            result=mysql.query(sql_full);
-    if(doDebug){console.log('===================================',"\n\t",'SQL: ',sql_full,"\n");}
-        self.apply_callback(result,callbacks,function(res,cbs,arg){//res,cbs,arg - arguments supplied from apply_callback()
-            for(var _args=[],a=0;a<arguments.length;a++){_args.push(arguments[a]);}
-            if(typeof(callbacks.last)==='function'){callbacks.last.apply(self,_args);}//callbacks.last(this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
-
-            for(var _args=['last'],a=0;a<arguments.length;a++){_args.push(arguments[a]);}
-            if(typeof(callbacks.callback)==='function'){callbacks.callback.apply(self,_args);}//callbacks.callback('last',this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
-
-        });
+        var sql_full=sql_select + ' ' + sql_from + (utils.basic_str(sql_where)?'WHERE '+ sql_where:'') + sql_order_by + (utils.basic_str(sql_limit)?' ' + sql_limit:'') + ';';
+if(doDebug){console.log("\n\t",'============== find() SQL: ============== ',"\n",sql_full,"\n");}
+        var output_func=function(lastCall){
+                self.apply_callback(mysql.query(sql_full), callbacks, lastCall);//, doDebug
+            };
+        return output_func.bind(self);
     };
     genericDB.prototype.validate_write=function(dataObj,errArr,doDebug){
         var self=this,
@@ -402,6 +499,7 @@ console.log('====== sample_tbl ||| cont ZERO: w_count: '+w_count+'  count: '+cou
                 //'content_md5':undefined,
                 'method':undefined
             };
+console.log('remember to detect (col_type) updatestamp/createstamp!')
         if(utils.obj_valid_key(dataObj,'id')){
             valid_keys=merge(true, {}, valid_keys, {'id':undefined});
         }
@@ -526,7 +624,7 @@ console.log('====== sample_tbl ||| cont ZERO: w_count: '+w_count+'  count: '+cou
                     var sql_val=dataObj[k];
                     has_modified=(k.toLowerCase()==='date_modified'?true:has_modified);
                     has_event=(k.toLowerCase()==='date_event'?true:has_event);
-                    if(k.indexOf('date_')===0 && sql_val==='CURRENT_TIMESTAMP' && !self.mysql_55_hack(sql_val)){//5.6 likes current timestamp
+                    if(k.indexOf('date_')===0 && sql_val==='CURRENT_TIMESTAMP' && !self.mysql_55_(sql_val)){//5.6 likes current timestamp
                         sql_val=sql_val;}
                     else if(k.indexOf('date_')===0 && sql_val==='CURRENT_TIMESTAMP' && self.mysql_55_hack(sql_val)){//5.5 likes NOW()
                         sql_val='NOW()';}
@@ -674,7 +772,7 @@ console.log("\n\n========= genericDB.prototype.update =========\n\n");
         }
     };
 
-    genericDB.prototype.query_last_result=function(callbacks,doDebug){
+    genericDB.prototype.query_last_result=function(callbacks,doDebug){//depricated
         var self=this;
         return function(res,cbs,arg){//res,cbs,arg - arguments supplied from apply_callback()
             for(var _args=[],a=0;a<arguments.length;a++){_args.push(arguments[a]);}
@@ -694,15 +792,51 @@ console.log("\n\n========= genericDB.prototype.update =========\n\n");
         return sql_limit;
     };
 
-    genericDB.prototype.mysql_55_hack=function(dateIn){//incomplete but basically a manual switch for now
+    genericDB.prototype.where_transform=function(dataObj, tableName, itFunc){
+        var self=this,
+            all_cols=self.column_schema_cols('all', tableName),
+            w_count=0;
+
+        for(var c=0;c<all_cols.length;c++){
+            var key=all_cols[c];
+            if(utils.obj_valid_key(dataObj,key) && _.indexOf(all_cols,key)!==-1){
+                var seek=utils.array_object_search(self.table_index[tableName].schema,'col_name',key),
+                    where_logic=self.where_obj.schema();
+                if(w_count!=0){
+                    var where_comp=self.where_obj.schema('comp');//ideally it will eventually look like where.build().and().push();
+                    where_comp.build('AND');
+                    self.where_obj.push(where_comp);
+                }
+                if(typeof(dataObj[key])==='object' && dataObj[key] instanceof Array && dataObj[key].length>0){//if the column is a enum we need to adjust this
+                    where_logic.build.apply(where_logic,[seek[0], 'IN', dataObj[key]].concat(dataObj[key]));
+                }else{
+                    where_logic.build(seek[0], '=', dataObj[key]);
+                }
+                self.where_obj.push(where_logic);
+                w_count++;
+            }
+            if(typeof(itFunc)==='function'){itFunc(key,w_count);}
+        }
+
+        return {'where_sql':self.where_obj.adhere(),'count':w_count};
+    };
+
+
+    //genericDB.prototype.mysql_55_date_hack=function(dateIn){
+    genericDB.prototype.mysql_55_hack=function(dateIn){//incomplete but basically a manual switch for now - depricated
         var self=this;
+        // return (compareVersions(mysql.version,'5.5'!==1) && dateIn.toUpperCase()==='CURRENT_TIMESTAMP'?true:false);
         return (mysql.version=='5.5' && dateIn.toUpperCase()==='CURRENT_TIMESTAMP'?true:false);
     };
-    genericDB.prototype.validate_write=function(){
+    genericDB.prototype.validate_write=function(){//depricated
         var self=this;
     };
-    genericDB.prototype.terminate=function(){
+    genericDB.prototype.terminate=function(next){
         var self=this;
+        mysql.end(function(err){
+            if(err){throw new Error("[GENERICDB] "+err.toString());}
+            if(typeof(next)==='function'){next();}
+        });
     };
     return genericDB;
 };

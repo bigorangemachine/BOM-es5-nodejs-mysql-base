@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "JSON": "^1.0.0",
+    "compare-versions": "^3.0.0",
     "fs": "0.0.2",
     "http": "0.0.0",
     "md5": "^2.0.0",
@@ -34,7 +35,7 @@
     "util": "^0.10.3"
   },
   "scripts": {
-    "preinstall":"mkdir _cache/ && chmod 777 _cache/",
+    "preinstall": "mkdir _cache/ && chmod 777 _cache/",
     "install": "echo NO INSTALL",
     "start": "node index.js",
     "uninstall": "echo NO UNINSTALL",

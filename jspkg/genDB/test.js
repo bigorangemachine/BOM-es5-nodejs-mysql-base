@@ -77,12 +77,12 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
             }
 
             //custom modules -  mysql dependent
-            var genDB=require('../genDB')(mysql, _, utils, merge),
+            var genDB=require('../genDB')(mysql_conn, _, utils, merge),
                 do_sets=[
                     function(){
                         try{tests.test_build_least(true);}
                         catch(e){throw new Error(e.toString());}
-                        
+
                         try{tests.test_build_least(false);}
                         catch(e){throw new Error(e.toString());}
 
@@ -98,12 +98,17 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
 
                         try{tests.test_build_with_comp_op_fail();}
                         catch(e){throw new Error(e.toString());}
+                    },
+                    function(){
+                        try{genDB_obj.find({'id':1},function(queryObj, status, eventsIn, debugVar){/*something?*/});}
+                        catch(e){throw new Error(e.toString());}
                     }/*,
                     function(){
                         try{xxxxxxxxx}
                         catch(e){throw new Error(e.toString());}
                     }*/
                 ];
+
             for(var d=0;d<do_sets.length;d++){
 
                 var genDB_obj=new genDB(),

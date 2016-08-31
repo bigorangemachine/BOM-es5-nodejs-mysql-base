@@ -6,7 +6,7 @@ module.exports = function(_, utils, merge){
     var self_init=function(schemaIn){//private scope
         var schema=this.schema();
         for(var s in schema){
-            if(utils.obj_valid_key(schema, s)){this[s]=schema[s];}}
+            if(utils.obj_valid_key(schema, s)){this[s]=(typeof(schemaIn[s])!=='undefined'?schemaIn[s]:schema[s]);}}
     };
     //statics
     var column_schema={
@@ -78,17 +78,27 @@ module.exports = function(_, utils, merge){
     };
     columnSchema.prototype.clean=function(valIn, colObj){
         var self=this,
-            do_nothing_list=['string'],//should be ['string'] - you can add to this if you want to put types into development bypass
+            do_nothing_list=['string'],//should be only ['string'] - you can add to this if you want to put types into development bypass
             number_list=['int','float'],
             output='';
+
         if(typeof(colObj)==='undefined'){colObj=self;}
-        if(!(colObj instanceof column_schema)){throw new Error("Valid value check: 2nd argument 'column' is invalid (was not a string or valid column object '"+column_schema.prototype.constructor.name+"'). It could not be found in table '"+tableName+"'.");return false;}
-        if(valIn===null && colObj.is_null===true){return null;}
+        if(!(colObj instanceof columnSchema)){throw new Error("Valid value check: 2nd argument 'column' is invalid (was not a string or valid column object '"+columnSchema.prototype.constructor.name+"'). It could not be found in table '"+tableName+"'.");return false;}
+        if((valIn===null || typeof(valIn)==='undefined') && colObj.is_null===true){return null;}
         if(_.indexOf(do_nothing_list, colObj.val_type)!==-1){
             output=valIn;
-       }else if(colObj.val_type==='date'){// this needs more data detection
-            output=valIn;
-            throw new Error("WRITE THE DATE FILTERING!!!");return false;
+        }else if(colObj.val_type==='date'){
+           var reservered_strs=['NOW()','CURRENT_TIMESTAMP'];
+           reservered_strs.forEach(function(v,i,arr){reservered_strs[i]=v.toUpperCase();});
+           if(valIn instanceof Date){
+               output=valIn;
+           }else if(typeof(valIn)==='string' && (_.indexOf(reservered_strs,valIn.toUpperCase())>=0)){
+               output=valIn.toUpperCase();
+           }else if(typeof(valIn)==='number' || typeof(valIn)==='string'){
+               output=new Date(valIn);
+           }else{
+               throw new Error("[COLUMNSCHEMA] Attempting to clean date type. Input is '"+valIn+"'. Expected 'new Date("+valIn+")' parseable, date reserved-word or object with 'Date constructor'.");return false;
+           }
         }else if(colObj.val_type==='enum'){//I hate enums.... will do if necessary
             throw new Error("Enums currently not built");return false;
         }else if(_.indexOf(number_list, colObj.val_type)!==-1){
@@ -104,27 +114,27 @@ module.exports = function(_, utils, merge){
            throw new Error("Could not escape value '"+valIn+"' because it is a type '"+colObj.val_type+"'.");return false;
         }
         if(colObj.val_type==='string' && typeof(output)==='string' && output.length>colObj.size){//string is the only one that needs this. rest of if's should cover their own
-            if(!self.silent){console.warn("'"+valIn+"' is longer than allowed string length '"+colObj.size+"'");}
+            if(!self.silent){console.warn("'"+valIn+"' is longer than allowed string length '"+colObj.size+"' ("+output.length+' > '+colObj.size+")");}
             output=output.substr(0, colObj.size);
         }else if(colObj.val_type==='int'){
             var num_str=output.toString();
             num_str=(num_str.indexOf('.')!==-1?num_str.split('.')[0]:num_str);
             if(!self.silent){
-                if(colObj.size>num_str.length){console.warn("'"+valIn+"' is longer than allowed string length '"+colObj.size+"' for column `"+colObj.col_name+"`.");}
+                if(num_str.length>colObj.size){console.warn("'"+valIn+"' is longer than allowed string length '"+colObj.size+"' for column `"+colObj.col_name+"` ("+num_str.length+' > '+colObj.size+").");}
             }
-            output=num_str.substr(0, colObj.size);
+            output=parseInt(num_str.substr(0, colObj.size));
         }else if(colObj.val_type==='float'){
             var num_str=output.toString()
                 ex=num_str.split('.'),
                 whole_num=(!utils.basic_str(ex[0])?'':ex[0].trim()),
                 dec_num=(!utils.basic_str(ex[1])?'':ex[1].trim());
             if(!self.silent){
-                if(colObj.size[0]>whole_num.length){console.warn("Whole number portion of '"+valIn+"' is longer than allowed string length '"+colObj.size[0]+"' for column `"+colObj.col_name+"`.");}
-                if(colObj.size[1]>dec_num.length){console.warn("Decimal number portion of '"+valIn+"' is longer than allowed string length '"+colObj.size[1]+"' for column `"+colObj.col_name+"`.");}
+                if(whole_num.length>colObj.size[0]){console.warn("Whole number portion of '"+valIn+"' is longer than allowed string length '"+colObj.size[0]+"' for column `"+colObj.col_name+"`.");}
+                if(dec_num.length>colObj.size[1]){console.warn("Decimal number portion of '"+valIn+"' is longer than allowed string length '"+colObj.size[1]+"' for column `"+colObj.col_name+"`.");}
             }
             whole_num=(!utils.basic_str(whole_num)?'0':whole_num);
             dec_num=(!utils.basic_str(dec_num)?'0':dec_num);
-            output=whole_num.substr(0, colObj.size[0])+'.'+dec_num.substr(0, colObj.size[1]);
+            output=parseFloat(whole_num.substr(0, colObj.size[0])+'.'+dec_num.substr(0, colObj.size[1]));
         }
         return output;
     };
