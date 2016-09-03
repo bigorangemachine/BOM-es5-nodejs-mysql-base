@@ -102,6 +102,13 @@ Its recommended to take advantage of JavaScripts 'Pass by Reference' (or 'Copy o
     //foo & baz are changed by whatever was added through myGLaDioS.add() after here because above is blocking
     ```
 
+* `GLaDioS.reroot(` **newRootObj** *(object)* `)`: *returns* `void`
+
+  **Reroot (Not Tested - WIP)**
+
+  For the next `GLaDioS.icallback()` using this method will change the default binding `this` (when using `func.apply(thisObj, [arg1, arg2])`) in `GLaDioS.icallback()`.  Once executed switches back to the one passed as the second argument `root` in the constructor  (`new GLaDioS({}, root)`).
+
+  This is intended to help automated tests & prototypes; thus it shouldn't be used as a feature.
 
 ## Notes on providing a callback
 -----------
