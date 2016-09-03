@@ -1,6 +1,6 @@
 
 module.exports = function(){//dependancies
-    var utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    var utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
     function genericDBResultStatus(opts){
         if(!opts){opts={};}

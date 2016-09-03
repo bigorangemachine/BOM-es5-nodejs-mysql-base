@@ -9,8 +9,8 @@ var _ = require('underscore'),//http://underscorejs.org/
     md5 = require('md5'),
     repeat = require('string.prototype.repeat'),//FOR EASY DEBUGGING :D
     JSON = require('JSON'),
-    utils=require('bom-nodejs-utils'),
-    vars=require('bom-nodejs-utils/vars');
+    utils=require('bom-utils'),
+    vars=require('bom-utils/vars');
 //custom modules
 // var utils = require('./jspkg/utils'),vars = require('./jspkg/vars');
 //varaibles

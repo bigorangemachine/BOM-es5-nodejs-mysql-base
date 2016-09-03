@@ -5,7 +5,7 @@ module.exports = function(){
         where_schema=require('./logic')(),
         GLaDioS=require('GLaDioS')(),
         md5=require('md5'),
-        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+        utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
     function whereChain(opts){
         opts=(typeof(opts)!=='undefined'?opts:{});

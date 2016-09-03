@@ -2,7 +2,7 @@
 module.exports = function(mysql){
     var md5=require('md5'),
         compareVersions=require('compare-versions'),
-        utils=require('bom-nodejs-utils'),
+        utils=require('bom-utils'),
         merge=require('merge'),
         _=require('underscore');
 

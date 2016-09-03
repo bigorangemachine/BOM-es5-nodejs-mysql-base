@@ -32,7 +32,7 @@ module.exports = function(){//dependancies
     var GLaDioS=require('GLaDioS')(),
         c0re=require('./sub/c0re')(),
         c0reModel=require('./sub/c0reModel')(),
-        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+        utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
     var self_init=function(){//private methods
             var self=this;

@@ -4,8 +4,8 @@ var _ = require('underscore'),//http://underscorejs.org/
     merge = require('merge'),//allows deep merge of objects
     mysql = require('mysql'),//https://github.com/felixge/node-mysql/
     fs = require('fs'),
-    utils=require('bom-nodejs-utils'),
-    vars=require('bom-nodejs-utils/vars'),
+    utils=require('bom-utils'),
+    vars=require('bom-utils/vars'),
     merge=require('merge'),
     _=require('underscore');
 //custom modules

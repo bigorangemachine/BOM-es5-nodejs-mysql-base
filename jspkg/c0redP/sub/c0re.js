@@ -2,7 +2,7 @@
 module.exports = function(){//dependancies
     var GLaDioS=require('GLaDioS')(),
         c0reModel=require('./c0reModel')(),
-        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+        utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
     function c0re(successFunc, failFunc, opts){
         if(!opts){opts={};}

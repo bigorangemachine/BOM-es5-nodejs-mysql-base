@@ -1,6 +1,6 @@
 
 module.exports = function(process, fs, root_params){
-    var utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    var utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
     root_params.cmd=process.argv[0]; //info!
     root_params.path=process.argv[1];
 

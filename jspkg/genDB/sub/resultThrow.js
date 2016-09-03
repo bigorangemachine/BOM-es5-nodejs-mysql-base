@@ -2,7 +2,7 @@
     Inteded to standarize the genDB responses so they are predictable
 */
 module.exports = function(){//dependancies
-    var genericDBResultStatus=require('./resultModel')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    var genericDBResultStatus=require('./resultModel')(),utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
 
     /*
