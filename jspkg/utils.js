@@ -2,6 +2,12 @@
 module.exports.getRandomInt=function(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+module.exports.isNode=function(){
+    if(typeof(process)!=='undefined' && typeof(process.versions)!=='undefined' && typeof(process.versions)!=='undefined' && typeof(process.versions.node)!=='undefined'){
+        return true;
+    }
+    return false;
+}
 module.exports.check_strip_last=function(stringIn,checkFor){
 	var output="";
 	if(typeof(stringIn)==='string' && (stringIn.indexOf(checkFor)!==-1)){//found
@@ -65,6 +71,22 @@ module.exports.obj_valid_key=function(obj,key){
     }
     return result;
 };
+module.exports.array_del_at=function(arrayIn, indexNum){
+    if(!(arrayIn instanceof Array)){throw new Error("array_del_at was not passed an array");}
+    else if(typeof(indexNum)!=='number' && !(indexNum instanceof Array)){throw new Error("array_del_at was not pass a valid indexNum");}
+    if(!(indexNum instanceof Array)){indexNum=[indexNum];}
+    for(var ni=0;ni<indexNum.length;ni++){
+        if(typeof(indexNum[ni])!=='number'){throw new Error("array_del_at was not pass a valid indexNum.  Must be a number");return;}}
+    var len=arrayIn.length,expected=0,needs_redex=false;
+    for(var ti=0;ti<len;ti++){
+        if(ti!==expected){needs_redex=true;break;}expected++;}
+    arrayIn=(needs_redex?this.array_redex(arrayIn):arrayIn);
+    //we're sane! now do this!
+    indexNum.sort().reverse();
+    for(var ni=0;ni<indexNum.length;ni++){
+        arrayIn.splice(indexNum[ni]-1,1);
+    }
+};
 module.exports.array_redex=function(arrayIn){//if you unset an array it creates a hole in the index.  This reindexes your array
 	if(typeof(arrayIn)!='object'){return false;}
 	var is_valid_arr;//=undefined
@@ -72,10 +94,10 @@ module.exports.array_redex=function(arrayIn){//if you unset an array it creates 
 	if(arrayIn instanceof Array){is_valid_arr=true;}//check for array first as an array comes up both as array and object
 	else if(arrayIn instanceof Object){is_valid_arr=false;}
 	if(typeof(is_valid_arr)=='undefined'){//instanceof didn't work! IE9!?
-		if(arrayIn.constructor==Object){is_valid_arr=true;}
-		else if(arrayIn.constructor==Array){is_valid_arr=false;}
+		if(arrayIn.constructor==Array){is_valid_arr=true;}
+		else if(arrayIn.constructor==Object){is_valid_arr=false;}
 	}
-	if(typeof(is_valid_arr)=='undefined'){is_valid_arr=(Object.prototype.toString.call(arrayIn) === '[object Array]');}
+	if(typeof(is_valid_arr)=='undefined'){is_valid_arr=(Object.prototype.toString.call(arrayIn) === '[object Array]');}//last resort - probably related to the above bug I introduced :(
 
 	if(is_valid_arr!==true){return false;}
 	var old=arrayIn.concat([]),
@@ -118,7 +140,7 @@ module.exports.in_object=function(valIn,objectIn){//similar to in_array
     // \\ find data.id===1
  */
 module.exports.array_object_search=function(arrIn,keyIn,valIn,doDebug){//if keyIn is an object it'll try reduce itself until it matches the key structure found
-	if(typeof(arrIn)!=='object' || !arrIn instanceof Array){return [];}
+	if(typeof(arrIn)!=='object' || !(arrIn instanceof Array)){return [];}
 	var output=[],
 		key_index=(typeof(keyIn)==='object'?this.array_keys(keyIn):[]);
 	for(var ai=0;ai<arrIn.length;ai++){
@@ -243,3 +265,25 @@ module.exports.parse_subtext=function(str,objs,nullRep){
         return (typeof(objs[key])!=='undefined'?objs[key]:rep_fail);
     });
 };
+module.exports.clone=function(obj){
+    var self=this,copy;
+    if (null===obj || typeof(obj)!=='object'){return obj;}// Handle the 3 simple types, and null or undefined
+    else if(obj instanceof Array){return obj.concat([]);}// Handle Array
+    else if(typeof(obj)==='object'){// Handle Object
+        if(obj instanceof Object){
+            copy={};
+            for(var attr in obj){try{copy[attr]=self.clone(obj[attr]);}catch(errToken){}}
+            return copy;
+        }else{
+            var constructor_clone = function(o){
+            	var clonedobj=new o.constructor;
+            	for(var clonekey in o){
+            		try{clonedobj[clonekey]=self.clone(o[clonekey]);}catch(errToken){}}
+            	return clonedobj;
+            };
+            return constructor_clone(obj);
+        }
+    }
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+    return obj;
+}

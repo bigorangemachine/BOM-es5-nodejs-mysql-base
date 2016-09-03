@@ -48,26 +48,6 @@ module.exports = function(_, utils, merge){
         instance_validate(where_inst, 'where_schema_instance', ['validate','build','adhere']);
         instance_validate(comparison_op_inst, 'comparison_op_instance', ['validate','build','adhere']);
 
-        //private variables - need to be objects
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('where_inst', function(v){where_inst=merge(true,{}, where_inst, v);});
-            this.__defineGetter__('where_inst', function(){return where_inst;});
-        }else{
-            Object.defineProperty(this, 'where_inst', {
-                //'set': function(v){where_inst=merge(true,{}, where_inst, v);},//setter
-                'get': function(){return where_inst;}//getter
-            });
-        }
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('comparison_op_inst', function(v){comparison_op_inst=merge(true,{}, comparison_op_inst, v);});
-            this.__defineGetter__('comparison_op_inst', function(){return comparison_op_inst;});
-        }else{
-            Object.defineProperty(this, 'comparison_op_inst', {
-                //'set': function(v){comparison_op_inst=merge(true,{}, comparison_op_inst, v);}//setter
-                'get': function(){return comparison_op_inst;}//getter
-            });
-        }
-
         where_list.push=function(v){
             if(v instanceof whereChain){Array.prototype.push.apply(where_list,[v]);}
             else{throw new Error("[WHEREBASE] Pushing to where_list contains invalid value.");}
@@ -79,19 +59,19 @@ module.exports = function(_, utils, merge){
                     nArgs.list.forEach(function(v,i,arr){self.where_list.push(nArgs.list[i]);});}//should be empty just append :D - is read only so they have to push to 'list' anyways
             });
         };
+
+        //private variables - need to be objects
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('where_list', function(v){where_list=v;});
+            this.__defineGetter__('where_inst', function(){return where_inst;});
+            this.__defineGetter__('comparison_op_inst', function(){return comparison_op_inst;});
             this.__defineGetter__('where_list', function(){return where_list;});
             this.__defineGetter__('where_list_unset', function(){return where_list_unset;});
         }else{
-            Object.defineProperty(this, 'where_list', {
-                'get': function(){return where_list;}//getter - break pass by reference
-            });
-            Object.defineProperty(this, 'where_list_unset', {
-                'get': function(){return where_list_unset;}//getter - break pass by reference
-            });
-        }
-//console.log('opts.hook_ins',opts.hook_ins);
+            Object.defineProperty(this, 'where_inst', {'get': function(){return where_inst;}});
+            Object.defineProperty(this, 'comparison_op_inst', {'get': function(){return comparison_op_inst;}});
+            Object.defineProperty(this, 'where_list', {'get': function(){return where_list;}});
+            Object.defineProperty(this, 'where_list_unset', {'get': function(){return where_list_unset;}});
+        }}
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
             'where_adhere': (typeof(opts.hook_ins.where_adhere)==='function'?opts.hook_ins.where_adhere:false),

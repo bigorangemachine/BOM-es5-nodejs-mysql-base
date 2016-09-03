@@ -1,26 +1,27 @@
-
-
-
-module.exports = function(_, utils, merge){//dependancies and parentOOP protoptype/classes
+/*
+    Inteded to standarize the genDB responses so they are predictable
+*/
+module.exports = function(_, utils, merge){//dependancies
     var genericDBResultStatus=require('./resultModel')(_, utils, merge);
 
 
-    function genericDBThrowResultStatus(resObj, statusModel, events, debug){
-        /*
-            new genericDBThrowResultStatus(
-                    resObj, //arg0 'queryObj' -> mysql query object expected - indicate a failure with false
-                    statusModel, //arg1 'status'
-                    events, //arg2 'events'
-                    debug //arg3 'debugBool'
-            )
-        */
+    /*
+        new genericDBThrowResultStatus(
+                resObj, //arg0 'queryObj' -> mysql query object expected - indicate a failure with false
+                statusModel, //arg1 'status'
+                events, //arg2 'events'
+                debug //arg3 'debugBool'
+        )
+    */
 
-        var expected_constructor='Query';
-        this._res=(typeof(resObj)==='object' && resObj.constructor.name.toLowerCase()===expected_constructor.toLowerCase()?resObj:false);
+    function genericDBThrowResultStatus(resObj, statusModel, events, debug){
+        var expected_constructor=['Query'];
+        expected_constructor.forEach(function(v,i,arr){expected_constructor[i]=v.toLowerCase()});
+        this._res=(typeof(resObj)==='object' && _.indexOf(expected_constructor,resObj.constructor.name.toLowerCase())!==-1?resObj:false);
         this.status=(statusModel instanceof genericDBResultStatus?statusModel:new genericDBResultStatus());
         this.events=(events instanceof Array?events:[]);
         this.do_debug=(debug===true?true:false);
-        if(this._res===false && typeof(resObj)==='object'){throw new Error("[genericDBThrowResultStatus] 1st argument must be 'false' (boolean) or of constructor type '"+expected_constructor+"'.");}
+        if(this._res===false && typeof(resObj)==='object'){throw new Error("[genericDBThrowResultStatus] 1st argument must be 'false' (boolean) or of constructor type '"+expected_constructor.split(', ')+"'.");}
     }
     genericDBThrowResultStatus.prototype.toString=function(){
         var self=this,types='';

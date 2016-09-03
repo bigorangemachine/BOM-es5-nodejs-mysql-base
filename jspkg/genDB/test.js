@@ -99,7 +99,7 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
                         try{tests.test_build_with_comp_op_fail();}
                         catch(e){throw new Error(e.toString());}
                     },
-                    function(){
+                    function(){//find query
                         try{genDB_obj.find({'id':1},function(queryObj, status, eventsIn, debugVar){/*something?*/});}
                         catch(e){throw new Error(e.toString());}
                     }/*,
@@ -110,7 +110,6 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
                 ];
 
             for(var d=0;d<do_sets.length;d++){
-
                 var genDB_obj=new genDB(),
                     where_obj=genDB_obj.where_obj,
                     tests=require('./sub/tests')(genDB_obj, where_obj, _, utils, merge);

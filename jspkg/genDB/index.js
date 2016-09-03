@@ -13,27 +13,16 @@ module.exports = function(mysql, _, utils, merge){
                 /*where_obj_set=function(v){//setter
                     where_obj=v;},*/
                 where_obj_get=function(){//getter
-                    return where_obj;};
+                    return where_obj;},
+                silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
+opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
             if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
                 //this.__defineSetter__('where_obj', where_obj_set);
                 this.__defineGetter__('where_obj', where_obj_get);
-            }else{
-                Object.defineProperty(this, 'where_obj', {
-                //'set': where_obj_set,
-                'get': where_obj_get
-                });
-            }
-
-opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
-            var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
-            if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-                //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
                 this.__defineGetter__('silent', function(){return silent_obj._val;});
             }else{
-                Object.defineProperty(this, 'silent', {
-                //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
-                'get': function(){return silent_obj._val;}//getter
-                });
+                Object.defineProperty(this, 'where_obj', {'get': where_obj_get});
+                Object.defineProperty(this, 'silent', {'get': function(){return silent_obj._val;}});
             }
 
             self.hook_ins.change_text('result', "[GENERICDB] When query triggers result 'on(result)' callback");

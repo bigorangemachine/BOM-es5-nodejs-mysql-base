@@ -1,5 +1,5 @@
 
-module.exports = function(_, utils, merge){//dependancies and parentOOP protoptype/classes
+module.exports = function(_, utils, merge){//dependancies
 
     function genericDBResultStatus(opts){
         if(!opts){opts={};}

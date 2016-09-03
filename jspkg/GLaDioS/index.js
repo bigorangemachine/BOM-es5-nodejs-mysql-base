@@ -52,15 +52,8 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             },
             plug_get=function(){//getter
                 return plugin;
-            };
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            this.__defineSetter__('plugin', plug_set);
-            this.__defineGetter__('plugin', plug_get);
-        }else{
-            Object.defineProperty(this, 'plugin', {'set': plug_set, 'get': plug_get});
-        }
-
-        var icallback=function(keyIn,argsIn,nextFunc){//internal callback - pluginable hooks
+            },
+            icallback=function(keyIn,argsIn,nextFunc){//internal callback - pluginable hooks
             	var self=this,
                     results=[],
             		has_callback=self.has_callback(keyIn);
@@ -81,6 +74,7 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
                     }
             	}
                 if(typeof(nextFunc)==='function'){nextFunc(argsIn, results);}
+                root_obj.root_var=(typeof(root)==='object'?root:self);//overrided by reroot()? Reset it! aka self.root=root (the original passed in);
             	return has_callback;
             },/*
             icallback_set=function(v){//setter
@@ -88,53 +82,46 @@ module.exports = function(_, utils, merge){//dependancies - underscore currently
             },*/
             icallback_get=function(){//getter
                 return icallback;
-            };
-
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('icallback', icallback_set);
-            this.__defineGetter__('icallback', icallback_get);
-        }else{
-            Object.defineProperty(this, 'icallback', {/*'set': icallback_set, */'get': icallback_get});
-        }
-
-        var valid_callback=function(funcIn){
+            },
+            valid_callback=function(funcIn){
                 if(typeof(funcIn)==='function'){return true;}
                 if(funcIn instanceof ecapsulateTask){return true;}
                 return false;
             },
             valid_callback_get=function(){//getter
-                return valid_callback;};
-
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('valid_callback', valid_callback_set);
-            this.__defineGetter__('valid_callback', valid_callback_get);
-        }else{
-            Object.defineProperty(this, 'valid_callback', {/*'set': valid_callback_set, */'get': valid_callback_get});
-        }
-
-
-        var root_obj={
-                'root_var': (typeof(root)==='object'?root:this)
+                return valid_callback;
+            },
+            root_obj={
+                'root_var': (typeof(root)==='object'?root:this)//aka self.root / this.root
             },
             root_callback_get=function(){//getter
-                return root_obj.root_var;};
+                return root_obj.root_var;},
+            silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
         if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('root', valid_callback_set);
+            this.__defineSetter__('plugin', plug_set);
+            this.__defineGetter__('plugin', plug_get);
+            //read only!
+            this.__defineGetter__('icallback', icallback_get);
+            this.__defineGetter__('valid_callback', valid_callback_get);
             this.__defineGetter__('root', root_callback_get);
-        }else{
-            Object.defineProperty(this, 'root', {/*'set': root_callback_set, */'get': root_callback_get});
-        }
-
-        var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
-            //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
             this.__defineGetter__('silent', function(){return silent_obj._val;});
         }else{
-            Object.defineProperty(this, 'silent', {
-            //'set': function(v){operator_index=merge(true,{}, operator_index, v);},//setter
-            'get': function(){return silent_obj._val;}//getter
-            });
+            Object.defineProperty(this, 'plugin', {'set': plug_set, 'get': plug_get});
+            //read only!
+            Object.defineProperty(this, 'icallback', {'get': icallback_get});
+            Object.defineProperty(this, 'valid_callback', {'get': valid_callback_get});
+            Object.defineProperty(this, 'root', {'get': root_callback_get});
+            Object.defineProperty(this, 'silent', {'get': function(){return silent_obj._val;}});
         }
+
+        GLaDioS.prototype.reroot=function(newRootObjIn){//this sets a temporary bypass
+            var self=this;
+            if(typeof(newRootObjIn)==='object'){
+                if(!self.silent){console.warn("[GLaDioS] Warning - default 'this' reference (aka root) has temporarily rerooted until the next 'icallback' as completed.");}
+                root_obj.root_var=newRootObjIn;// aka self.root=newRootObjIn;
+            }
+        };
+
 		self_init.apply(this, [opts]);//start! self_init that passes the 'this' context through
 	};
 
