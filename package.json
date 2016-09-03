@@ -32,8 +32,8 @@
     "system": "^1.0.4",
     "underscore": "^1.8.3",
     "url": "^0.10.3",
-    "bom-utils": "git+https://github.com/bigorangemachine/BOM-nodejs-utils.git",
-    "GLaDioS": "git+https://github.com/bigorangemachine/BOM-GLaDioS.js.git"
+    "bom-utils": "git+https://github.com/bigorangemachine/BOM-nodejs-utils.git#v0.0.1",
+    "GLaDioS": "git+https://github.com/bigorangemachine/BOM-GLaDioS.js.git#v0.0.1"
   },
   "scripts": {
     "preinstall": "mkdir -p _cache/ && chmod 777 _cache/",
