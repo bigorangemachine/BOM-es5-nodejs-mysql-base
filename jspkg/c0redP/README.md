@@ -126,34 +126,32 @@ This is a placeholder.  I need to write an async tasker.  c0redP (Core-P aka Per
 
 
 
-
-//c0re - ready/exit/start/bind
-
-//generator - continuous - always running - exits when forced aka. animateFrame & setImmediate
-//iterator - tasker - complete a list of jobs - exits when done aka. promises
-
-//queue - one thing at a time - checks exit at end
-//pool - complete all the things - checks exit after each task
-//fuzzy - requires checkins - timeouts when things take too long
+### c0re
+[ ] ready
+[ ] exit
+[ ] start
+[ ] bind - low priority data-binding
 
 
+### Implement names of these characters ^_^
 
-//Wheatley (iterator-queue) - Narrator
-//Cake (generator-queue) - Create the cake, queue for the cake
-//Paranoia (iterator-pool) - someone who is paranoid would work like this (Poker Night 2 <3)
-//Anger (generator-pool) - someone who is angry works like this
-//Curiosity (iterator-fuzzy) - someone who is curious would do this - examine things then move on
-//Morality (generator-fuzzy) - someone who is morale would work like this - checkin but always mulling
+[ ] Wheatley (iterator-queue) - Narrator
+[ ] Cake (generator-queue) - Create the cake, queue for the cake
+[ ] Paranoia (iterator-pool) - someone who is paranoid would work like this (Poker Night 2 <3)
+[ ] Anger (generator-pool) - someone who is angry works like this
+[ ] Curiosity (iterator-fuzzy) - someone who is curious would do this - examine things then move on
+[ ] Morality (generator-fuzzy) - someone who is morale would work like this - checkin but always mulling
 
 
+### Names of other portal sphere/AI characters
 
-//Space
-//Adventure
-//Fact
-//Bomb
-//Final Hours
-//Unused
-//Party
-//Turrets
-//Atlas & P-body
-//Companion Cube
+* Space
+* Adventure
+* Fact
+* Bomb
+* Final Hours
+* Unused
+* Party
+* Turrets
+* Atlas & P-body
+* Companion Cube
