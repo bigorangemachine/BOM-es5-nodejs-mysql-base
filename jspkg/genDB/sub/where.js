@@ -1,11 +1,11 @@
 //logic().and().sub().logic().and().logic() <- one day
-module.exports = function(_, utils, merge){
-    var md5=require('md5');
-
+module.exports = function(){
     //private dependancies
-    var comparisonOp=require('./comparison')(_, utils, merge),
-        where_schema=require('./logic')(_, utils, merge),
-        GLaDioS=require('../../GLaDioS')(_, utils, merge);
+    var comparisonOp=require('./comparison')(),
+        where_schema=require('./logic')(),
+        GLaDioS=require('../../GLaDioS')(),
+        md5=require('md5'),
+        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 
     function whereChain(opts){
         opts=(typeof(opts)!=='undefined'?opts:{});
@@ -71,7 +71,7 @@ module.exports = function(_, utils, merge){
             Object.defineProperty(this, 'comparison_op_inst', {'get': function(){return comparison_op_inst;}});
             Object.defineProperty(this, 'where_list', {'get': function(){return where_list;}});
             Object.defineProperty(this, 'where_list_unset', {'get': function(){return where_list_unset;}});
-        }}
+        }
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({
             'where_adhere': (typeof(opts.hook_ins.where_adhere)==='function'?opts.hook_ins.where_adhere:false),
@@ -209,4 +209,4 @@ module.exports = function(_, utils, merge){
         return output;
     };
     return whereBase;
-};
+}

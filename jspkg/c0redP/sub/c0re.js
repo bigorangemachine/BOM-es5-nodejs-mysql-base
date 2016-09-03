@@ -1,19 +1,17 @@
 //
-module.exports = function(_, utils, merge){//dependancies
-    var GLaDioS=require('../../GLaDioS')(_, utils, merge),
-        c0reModel=require('./c0reModel')(_, utils, merge);
-    var determinative_whitelist=[
-            'all', //pos.percent>=100%
-            '~all', //neg.percent!==100%
-            'pos' //pos.percent>=neg.percent
-        ];
+module.exports = function(){//dependancies
+    var GLaDioS=require('../../GLaDioS')(),
+        c0reModel=require('./c0reModel')(),
+        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+
     function c0re(successFunc, failFunc, opts){
         if(!opts){opts={};}
         opts=merge(true,{},opts);//break PBR
         opts.fps=(typeof(opts.fps)==='number' && !isNaN(opts.fps)?Math.abs(Math.ceil(opts.fps)):15);
         opts.fps_readonly=(typeof(opts.fps_readonly)==='boolean'?opts.fps_readonly:true);
 
-        var valid_cycles=['iterator','generator'], //iterator completes the tasts once (auto stoppage) - generator does things again (manual stoppage)
+        var determinative_whitelist=['all', '~all', 'pos'],
+            valid_cycles=['iterator','generator'], //iterator completes the tasts once (auto stoppage) - generator does things again (manual stoppage)
             valid_taskers=['queue','pool','fuzzy'];
         opts.cycle_type=(typeof(opts.cycle_type)==='string'?opts.cycle_type.toLowerCase():valid_cycles[0]);
         opts.tasker_type=(typeof(opts.tasker_type)==='string'?opts.tasker_type.toLowerCase():valid_taskers[0]);
@@ -24,8 +22,8 @@ module.exports = function(_, utils, merge){//dependancies
         this.once_queue=[];
         //private variables - need to be objects
         var self=this,
-            priv_obj={'once_queue':[]:'queue':[],'cycle_type':opts.cycle_type,'tasker_type':opts.tasker_type},
-            readonly_opts={'fps_readonly':opts.fps_readonly,'once_queue':priv_obj.once_queue,'queue':priv_obj.queue,'determinative':(typeof(opts.determinative)==='string' && _.indexOf(determinative_whitelist, opts.determinative.toLowerCase())!==-1)?opts.determinative.toLowerCase():determinative_whitelist[0])},
+            priv_obj={'once_queue':[],'queue':[],'cycle_type':opts.cycle_type,'tasker_type':opts.tasker_type},
+            readonly_opts={'fps_readonly':opts.fps_readonly, 'once_queue':priv_obj.once_queue, 'queue':priv_obj.queue, 'determinative':(typeof(opts.determinative)==='string' && _.indexOf(determinative_whitelist, opts.determinative.toLowerCase())!==-1?opts.determinative.toLowerCase():determinative_whitelist[0])},
             fps_obj={
                 'val':opts.fps,
                 'fpsgetter':function(){return fps_obj.val;},
@@ -34,7 +32,7 @@ module.exports = function(_, utils, merge){//dependancies
                         var clean_num=v;
                         clean_num=Math.abs(Math.ceil( (typeof(clean_num)!=='number'?parseInt(clean_num):clean_num) ));
                         clean_num=(isNaN(clean_num) || clean_num===null || clean_num<=0?fps_obj.val:clean_num);
-                        if(fps_obj.val!==clean_num){
+                        if(fps_obj.val!==clean_num){//actually changed! - do an async value change
                         	self.stop_large_cycle();
                             fps_obj.val=clean_num;//this sets the new value! self.fps=clean_num;
                             self.small_cycle.init_func(function(){//take the small cycle callback and trigger the large one later ;)
@@ -63,7 +61,7 @@ module.exports = function(_, utils, merge){//dependancies
                 'history':[],
                 'task_id':false,
                 'init_func':function(func){
-                    var binded=setInterval.bind(self, func, (1000/.fps));
+                    var binded=setInterval.bind(self, func, (1000/self.fps));
                     self.large_cycle.id=binded();//auto cancels!
                 },
                 'cancel_func':function(idIn){
@@ -153,7 +151,7 @@ module.exports = function(_, utils, merge){//dependancies
         try{
             pool_size_set(pool_size);//self cleaning ^_^
         }catch(e){
-            if(!self.silent){console.warn("[c0re] Pool size initialization threw an error:\n"+e.toString();}
+            if(!self.silent){console.warn("[c0re] Pool size initialization threw an error:\n"+e.toString());}
         }
 
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
@@ -165,11 +163,11 @@ module.exports = function(_, utils, merge){//dependancies
 
         var enqueue_once=function(func){//super next :D
                 var self=this;
-                priv_obj.once_queue.push(new c0reModel(func,function(){},function(){}););
+                priv_obj.once_queue.push( new c0reModel(func,function(){},function(){}) );
             },
             enqueue=function(func){
                 var self=this;
-                priv_obj.queue.push(new c0reModel(func,function(){},function(){}););
+                priv_obj.queue.push( new c0reModel(func,function(){},function(){}) );
             };
 
         //these need private scope access!
@@ -177,7 +175,7 @@ module.exports = function(_, utils, merge){//dependancies
             var self=this;
             if(!self.silent){console.warn("[c0re] pool size changes in an ansyc method");}
             throw new Error("[c0re] enqueue_pool_change not tested");
-            var args=[new c0reModel(callbacks.pos,callbacks.neg,opts);];
+            var args=[ new c0reModel(callbacks.pos,callbacks.neg,opts) ];
             enqueue_once.apply(self,args);
         };
         c0re.prototype.enqueue_next=function(funcIn,calbacks,optsIn){//everyone else takes the bus when it comes to 'next'
@@ -186,7 +184,7 @@ module.exports = function(_, utils, merge){//dependancies
         };
         c0re.prototype.enqueue=function(funcIn,calbacks,optsIn){
             var self=this;
-            calbacks=(typeof(calbacks)==='function':{'pos':calbacks,'neg':calbacks}:calbacks);
+            calbacks=(typeof(calbacks)==='function'?{'pos':calbacks,'neg':calbacks}:calbacks);
             if(typeof(funcIn)!=='function'){throw new Erorr("[c0re] Could not 'enqueue' because first argument was not a function");return false;}
             callbacks=merge(true,{
                 'do':funcIn,

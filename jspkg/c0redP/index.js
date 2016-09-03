@@ -1,14 +1,38 @@
+/*
+### Implement names of these characters ^_^
 
-module.exports = function(process, _, utils, merge){//dependancies
-    var GLaDioS=require('../GLaDioS')(_, utils, merge),
-        c0re=require('./sub/c0re')(_, utils, merge),
-        c0reModel=require('./sub/c0reModel')(_, utils, merge);
+[ ] Wheatley (iterator-queue) - Narrator
 
-    if(typeof(_)!=='object' || typeof(utils)!=='object' || typeof(merge)!=='object'){
-        var _=(!_?require('underscore'):_),
-            utils=(!utils?require('./jspkg/utils'):utils),
-            merge=(!merge?require('merge'):merge);
-    }
+[ ] Cake (generator-queue) - Create the cake, queue for the cake
+
+[ ] Paranoia (iterator-pool) - someone who is paranoid would work like this (Poker Night 2 <3)
+
+[ ] Anger (generator-pool) - someone who is angry works like this
+
+[ ] Curiosity (iterator-fuzzy) - someone who is curious would do this - examine things then move on
+
+[ ] Morality (generator-fuzzy) - someone who is morale would work like this - checkin but always mulling
+
+### Names of other portal sphere/AI characters
+
+* Space
+* Adventure
+* Fact
+* Bomb
+* Final Hours
+* Unused
+* Party
+* Turrets
+* Atlas & P-body
+* Companion Cube
+
+*/
+//module.exports = function(process){//dependancies
+module.exports = function(){//dependancies
+    var GLaDioS=require('../GLaDioS')(),
+        c0re=require('./sub/c0re')(),
+        c0reModel=require('./sub/c0reModel')(),
+        utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 
     var self_init=function(){//private methods
             var self=this;

@@ -1,5 +1,6 @@
 
-module.exports = function(parentOOPmodule, _, utils, merge){//dependancies and parentOOP protoptype/classes
+module.exports = function(parentOOPmodule){//dependancies and parentOOP protoptype/classes
+    var utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
     var self_init=function(){//private methods
     };
 
@@ -20,6 +21,10 @@ module.exports = function(parentOOPmodule, _, utils, merge){//dependancies and p
                 'get': function(){return private_obj;}//getter
             });
         }
+
+        //model setter!
+        for(var s in schema){//set schema default
+            if(utils.obj_valid_key(opts, s)){this[s]=opts[s];}}
 
         this.xxxxx={'limit':{'row_count':(typeof(opts)!=='undefined' && typeof(opts.xxxxx)==='number'?opts.xxxxx:9000)}};
 		self_init.apply(this);//start! self_init that passes the 'this' context through

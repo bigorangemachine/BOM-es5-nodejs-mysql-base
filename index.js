@@ -8,10 +8,11 @@ var _ = require('underscore'),//http://underscorejs.org/
     querystring = require('querystring'),
     md5 = require('md5'),
     repeat = require('string.prototype.repeat'),//FOR EASY DEBUGGING :D
-    JSON = require('JSON');
+    JSON = require('JSON'),
+    utils=require('bom-nodejs-utils'),
+    vars=require('bom-nodejs-utils/vars');
 //custom modules
-var utils = require('./jspkg/utils'),
-    vars = require('./jspkg/vars');
+// var utils = require('./jspkg/utils'),vars = require('./jspkg/vars');
 //varaibles
 var doc_root='',
     root_params={
@@ -20,7 +21,7 @@ var doc_root='',
         'found_params':[]
     };
 
-var config=require('./jspkg/configurator')(process, fs, _, utils, root_params);
+var config=require('./jspkg/configurator')(process, fs, root_params);
 doc_root=root_params.doc_root;
 
 config.API.endpoint=utils.parse_subtext(config.API.endpoint, {'account_num':config.API.account_num, 'searchkey':config.API.qs});

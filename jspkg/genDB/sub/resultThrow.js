@@ -1,8 +1,8 @@
 /*
     Inteded to standarize the genDB responses so they are predictable
 */
-module.exports = function(_, utils, merge){//dependancies
-    var genericDBResultStatus=require('./resultModel')(_, utils, merge);
+module.exports = function(){//dependancies
+    var genericDBResultStatus=require('./resultModel')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 
 
     /*

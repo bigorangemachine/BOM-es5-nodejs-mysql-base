@@ -3,10 +3,13 @@
 var _ = require('underscore'),//http://underscorejs.org/
     merge = require('merge'),//allows deep merge of objects
     mysql = require('mysql'),//https://github.com/felixge/node-mysql/
-    fs = require('fs');
+    fs = require('fs'),
+    utils=require('bom-nodejs-utils'),
+    vars=require('bom-nodejs-utils/vars'),
+    merge=require('merge'),
+    _=require('underscore');
 //custom modules
-var utils = require('../utils'),
-    vars = require('../vars');
+//var utils = require('../utils');
 //varaibles
 var doc_root='',
     root_params={
@@ -15,7 +18,7 @@ var doc_root='',
         'config':'./config',
         'found_params':[]
     };
-var config=require('../configurator')(process, fs, _, utils, root_params);
+var config=require('../configurator')(process, fs, root_params);
 doc_root=root_params.doc_root;
 
 if(!config || config.db.type.toLowerCase()!=='mysql'){console.error('ONLY DEVELOPED FOR MYSQL');process.exit();}
@@ -77,7 +80,7 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
             }
 
             //custom modules -  mysql dependent
-            var genDB=require('../genDB')(mysql_conn, _, utils, merge),
+            var genDB=require('../genDB')(mysql_conn),
                 do_sets=[
                     function(){
                         try{tests.test_build_least(true);}
@@ -112,7 +115,7 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
             for(var d=0;d<do_sets.length;d++){
                 var genDB_obj=new genDB(),
                     where_obj=genDB_obj.where_obj,
-                    tests=require('./sub/tests')(genDB_obj, where_obj, _, utils, merge);
+                    tests=require('./sub/tests')(genDB_obj, where_obj);
                 (function(genericDB){
                     do_sets[d].apply();
                 })(genDB);

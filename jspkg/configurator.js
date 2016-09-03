@@ -1,14 +1,16 @@
 
-module.exports = function(process, fs, _, utils, root_params){
+module.exports = function(process, fs, root_params){
+    var utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
     root_params.cmd=process.argv[0]; //info!
     root_params.path=process.argv[1];
-    
+
     var _ex=root_params.path.split('/');
     root_params.doc_root=_ex.slice(0,_ex.length-1).join('/')+'/';
     delete _ex;
+    root_params.rootmodule=utils.check_strip_first(root_params.path, root_params.doc_root);
 //console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!! CONFIGURATOR SETTING DOC_ROOT - '+root_params.doc_root + ' - !!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 
-    if(process.argv.length>2){//process node args - first 2 are always ['node', 'thefile-in-this-case-main.js'] 
+    if(process.argv.length>2){//process node args - first 2 are always ['node', 'thefile-in-this-case-index.js']
         var arg_error=false,
             base_wrap=['"','\''],
             base_sep='=',
@@ -76,7 +78,7 @@ module.exports = function(process, fs, _, utils, root_params){
                 val=(val.toString().toLowerCase()==='true'?true:val);
 //console.log("VAL",val,"\nCHECK",((val===false || utils.basic_str(val)?'TRUE':'FALSE')));
                 val=(val===false || utils.basic_str(val)?val:true);
-                
+
                 if(typeof(val)!=='undefined'){//nothing weird happened
 //console.log("typeof(val)!=='undefined'");
                     var eval_val=eval(seek[0].var_set);
@@ -107,7 +109,7 @@ module.exports = function(process, fs, _, utils, root_params){
 
     if(!root_params.silent){
         console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!! CONFIGURATOR - PID: '+process.pid+' USER: '+process.env['USER'] +' in '+root_params.doc_root + ' !!!!!!!!!!!!!!!!!!!!!!!!!!!!');}
-    
+
     try{
         var path_prefix='',
             load_path=root_params.config;

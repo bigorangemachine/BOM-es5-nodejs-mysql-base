@@ -140,7 +140,7 @@ myGLaDioS.icallback('init', _args, function(){
 Sample Callback 'move_item': Establishing a hook within OOP Prototype Object
 ```
 // prototype require module aka NodeJS ES5
-var GLaDioS=require('./jspkg/GLaDioS')(_, utils, merge);
+var GLaDioS=require('./jspkg/GLaDioS')();
 
 // prototype constructor
 function charSprite(opts){

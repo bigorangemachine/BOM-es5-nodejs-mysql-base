@@ -1,7 +1,7 @@
 
-module.exports = function( _, utils, merge){//dependancies
+module.exports = function(){//dependancies
     //private dependancies
-    var GLaDioS=require('../../GLaDioS')(_, utils, merge);
+    var GLaDioS=require('../../GLaDioS')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 
     function logicEscape(root, val){
         var obj_whitelist=[Date];

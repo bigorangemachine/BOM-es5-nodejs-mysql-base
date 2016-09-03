@@ -8,20 +8,20 @@ var _ = require('underscore'),//http://underscorejs.org/
     querystring = require('querystring'),
     md5 = require('md5'),
     repeat = require('string.prototype.repeat'),//FOR EASY DEBUGGING :D
-    JSON = require('JSON');
+    JSON = require('JSON'),
+    utils=require('bom-nodejs-utils'),
+    vars=require('bom-nodejs-utils/vars');
 //custom modules
-var utils = require('./jspkg/utils'),
-    vars = require('./jspkg/vars');
+// var utils = require('./jspkg/utils'),vars = require('./jspkg/vars');
 //varaibles
-var doc_root='', //ease of use
-    root_params={ //thread settings - some passed from config; some from terminal args as parsed in configurator
+var doc_root='',
+    root_params={
         'silent':false,//actual settings
         'config':'./config',
         'found_params':[]
     };
 
-//config related stuff!
-var config=require('./jspkg/configurator')(process, fs, _, utils, root_params);
+var config=require('./jspkg/configurator')(process, fs, root_params);
 doc_root=root_params.doc_root;
 
 if(!config || config.db.type.toLowerCase()!=='mysql'){console.error('ONLY DEVELOPED FOR MYSQL');process.exit();}//my apps prefer mysql
@@ -83,8 +83,8 @@ var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] 
             }
 
             //custom modules -  mysql dependent
-            var genericDB=require('./jspkg/genericDB')(mysql_conn, _, utils, merge),
-                logicBase=require('./jspkg/genDB/logic')( _, utils, merge),
+            var genericDB=require('./jspkg/genericDB')(mysql_conn),
+                logicBase=require('./jspkg/genDB/logic')(),
                 logDB=require('./jspkg/logDB'),
                 logDB_obj=new logDB(),
                 logicBase_obj=new logicBase(),

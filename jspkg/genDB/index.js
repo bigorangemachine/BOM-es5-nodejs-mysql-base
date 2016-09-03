@@ -1,7 +1,10 @@
 
-module.exports = function(mysql, _, utils, merge){
+module.exports = function(mysql){
     var md5=require('md5'),
-        compareVersions=require('compare-versions');
+        compareVersions=require('compare-versions'),
+        utils=require('bom-nodejs-utils'),
+        merge=require('merge'),
+        _=require('underscore');
 
 
     var self_init=function(opts){
@@ -33,12 +36,12 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
         };
 
     //statics
-    var column_schema=require('./sub/column')(_, utils, merge),// sub-dependancies
-        whereBase=require('./sub/where')(_, utils, merge),
-        genericDBResultStatus=require('./sub/resultModel')(_, utils, merge),
-        genericDBThrowResultStatus=require('./sub/resultThrow')(_, utils, merge),
+    var column_schema=require('./sub/column')(),// sub-dependancies
+        whereBase=require('./sub/where')(),
+        genericDBResultStatus=require('./sub/resultModel')(),
+        genericDBThrowResultStatus=require('./sub/resultThrow')(),
         //\\ sub-dependancies
-        GLaDioS=require('../GLaDioS')(_, utils, merge),
+        GLaDioS=require('../GLaDioS')(),
         table_schema={
             'table_name':false,
             'schema':[] //populated in self_init()

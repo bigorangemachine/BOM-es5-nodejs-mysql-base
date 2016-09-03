@@ -1,5 +1,7 @@
 
-module.exports = function(genDB_obj, where_obj, _, utils, merge){//dependancies and parentOOP protoptype/classes
+module.exports = function(genDB_obj, where_obj){//dependancies and parentOOP protoptype/classes
+    var utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    
     var do_console_err=false,
         do_err=function(input){
             if(do_console_err){
