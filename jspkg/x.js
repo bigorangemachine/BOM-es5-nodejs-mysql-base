@@ -12,7 +12,7 @@ module.exports = function(parentOOPmodule){//dependancies and parentOOP protopty
 
         //private variables - need to be objects
         var protected_obj={'private':'thing'},
-            protected_getter=function(keyIn){return function(){return (protected_obj[keyIn] instanceof Array || protected_obj[keyIn] instanceof Object?utils.clone(protected_obj[keyIn]):protected_obj[keyIn]);}},
+            protected_getter=function(keyIn){return function(){return (protected_obj[keyIn] instanceof Array || protected_obj[keyIn].constructor===Object?utils.clone(protected_obj[keyIn]):protected_obj[keyIn]);}},
             protected_setter=function(keyIn){return function(v){protected_obj[keyIn]=v;}},
             readonly_obj={'readonlyitem':'publickey'},
             readonly_getter=function(keyIn){return function(){return readonly_obj[keyIn]}};
