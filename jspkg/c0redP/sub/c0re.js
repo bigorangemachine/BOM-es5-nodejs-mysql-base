@@ -1,6 +1,6 @@
 //
 module.exports = function(){//dependancies
-    var GLaDioS=require('../../GLaDioS')(),
+    var GLaDioS=require('GLaDioS')(),
         c0reModel=require('./c0reModel')(),
         utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 

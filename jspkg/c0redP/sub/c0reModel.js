@@ -1,6 +1,6 @@
 //
 module.exports=function(){//dependancies
-    var GLaDioS=require('../../GLaDioS')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    var GLaDioS=require('GLaDioS')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
     var self_init=function(opts){//private methods
             var self=this;
             self.hook_ins.change_text('do', "[GENERICDB] When action is started or when the status is changed to 'busy'.");

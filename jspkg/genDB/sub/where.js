@@ -3,7 +3,7 @@ module.exports = function(){
     //private dependancies
     var comparisonOp=require('./comparison')(),
         where_schema=require('./logic')(),
-        GLaDioS=require('../../GLaDioS')(),
+        GLaDioS=require('GLaDioS')(),
         md5=require('md5'),
         utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 

@@ -1,7 +1,7 @@
 
 module.exports = function(){
     //private dependancies
-    var GLaDioS=require('../../GLaDioS')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
+    var GLaDioS=require('GLaDioS')(),utils=require('bom-nodejs-utils'),merge=require('merge'),_=require('underscore');
 
 
 

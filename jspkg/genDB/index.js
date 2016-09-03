@@ -41,7 +41,7 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
         genericDBResultStatus=require('./sub/resultModel')(),
         genericDBThrowResultStatus=require('./sub/resultThrow')(),
         //\\ sub-dependancies
-        GLaDioS=require('../GLaDioS')(),
+        GLaDioS=require('GLaDioS')(),
         table_schema={
             'table_name':false,
             'schema':[] //populated in self_init()
