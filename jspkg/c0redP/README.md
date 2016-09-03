@@ -127,19 +127,28 @@ This is a placeholder.  I need to write an async tasker.  c0redP (Core-P aka Per
 
 
 ### c0re
+
 [ ] ready
+
 [ ] exit
+
 [ ] start
+
 [ ] bind - low priority data-binding
 
 
 ### Implement names of these characters ^_^
 
 [ ] Wheatley (iterator-queue) - Narrator
+
 [ ] Cake (generator-queue) - Create the cake, queue for the cake
+
 [ ] Paranoia (iterator-pool) - someone who is paranoid would work like this (Poker Night 2 <3)
+
 [ ] Anger (generator-pool) - someone who is angry works like this
+
 [ ] Curiosity (iterator-fuzzy) - someone who is curious would do this - examine things then move on
+
 [ ] Morality (generator-fuzzy) - someone who is morale would work like this - checkin but always mulling
 
 
