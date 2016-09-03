@@ -35,13 +35,13 @@ This is a placeholder.  I need to write an async tasker.  c0redP (Core-P aka Per
 
   * `pos` when success rate is greater than failure rate
 
-* `queue`: *readonly* `array [ ` c0reModel `]`
+* `queue`: *readonly* `array [ ` **c0reModel** `]`
 
   **Callback Queue**
 
   `queue` contains a list of models `c0reModel`.
 
-* `temp_queue`: *readonly* `array [ ` c0reModel `]`
+* `temp_queue`: *readonly* `array [ ` **c0reModel** `]`
 
   **Temporary Queue**
 
