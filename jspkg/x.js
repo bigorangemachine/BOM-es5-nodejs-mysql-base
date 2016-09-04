@@ -41,7 +41,7 @@ module.exports = function(parentOOPmodule){//dependancies and parentOOP protopty
         //parentOOPmodule.prototype.constructor.apply(this,[opts]);//extend parent constructor :D - do this here? or earlier
 	};
     OOPmodule.prototype=Object.create(parentOOPmodule.prototype.constructor);//extend parent
-    OOPmodule.prototype.constructor = OOPmodule;//reinforce typing (debugger shows correct model when you do this but it doesn't really make a difference unless you are type crazy)
+    OOPmodule.prototype.constructor=OOPmodule;//reinforce typing (debugger shows correct model when you do this but it doesn't really make a difference unless you are type crazy)
 
     //public methods
     OOPmodule.prototype.method_defined=function(){
