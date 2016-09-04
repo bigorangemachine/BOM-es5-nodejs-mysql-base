@@ -1,8 +1,9 @@
 
 module.exports = function(parentOOPmodule){//dependancies and parentOOP protoptype/classes
     var utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
-    var self_init=function(){//private methods
-    };
+    var self_init=function(opts){//private methods
+            var self=this;
+        };
 
     //statics
     var schema={'some':'thing','foo':'bar'};
@@ -36,11 +37,11 @@ module.exports = function(parentOOPmodule){//dependancies and parentOOP protopty
             if(utils.obj_valid_key(schema, s)){this[s]=(typeof(opts[s])!=='undefined'?opts[s]:schema[s]);}}
 
         this.xxxxx={'limit':{'row_count':(typeof(opts)!=='undefined' && typeof(opts.xxxxx)==='number'?opts.xxxxx:9000)}};
-		self_init.apply(this);//start! self_init that passes the 'this' context through
+		self_init.apply(this,[opts]);//start! self_init that passes the 'this' context through
+        //parentOOPmodule.prototype.constructor.apply(this,[opts]);//extend parent constructor :D - do this here? or earlier
 	};
-    OOPmodule.prototype=Object.create(parentOOPmodule.prototype);//extend parent
-    //OOPmodule.prototype.parent=parentOOPmodule.prototype; // <- if you want to make super/parent class
-    //this.parent.parent_function.call(this); <- then call it when you want to
+    OOPmodule.prototype=Object.create(parentOOPmodule.prototype.constructor);//extend parent
+    OOPmodule.prototype.constructor = OOPmodule;//reinforce typing (debugger shows correct model when you do this but it doesn't really make a difference unless you are type crazy)
 
     //public methods
     OOPmodule.prototype.method_defined=function(){
