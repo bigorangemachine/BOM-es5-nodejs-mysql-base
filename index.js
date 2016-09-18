@@ -70,7 +70,7 @@ rootThread.on('init',function(pkg,flagPosFunc,flagNegFunc){
 rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
     console.log("============================================================");
     console.log("============================================================");
-    console.log("======================== DO YOUR WORK HERE ==================");
+    console.log("======================= DO YOUR WORK HERE ==================");
     console.log("============================================================");
     console.log("============================================================");
     flagPosFunc();
