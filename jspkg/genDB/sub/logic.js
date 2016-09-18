@@ -9,7 +9,7 @@ module.exports = function(){//dependancies
         obj_whitelist.forEach(function(v,i,arr){obj_whitelist[i]=v.name;});
 
         if(val!==null && typeof(val)!=='string' && typeof(val)!=='number' && typeof(val)!=='boolean' && !(typeof(val)==='object' && _.indexOf(obj_whitelist, val.constructor.name)>=0)){throw new Error('[LOGICBASE] Operator to be escaped must be a primitive.');}
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+        if((typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function'))){//use pre IE9
             this.__defineGetter__('root', function(){return root;});
             this.__defineGetter__('_val', function(){return val;});
         }else{
@@ -67,16 +67,15 @@ module.exports = function(){//dependancies
             },
             silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
 opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+        if((typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function'))){//use pre IE9
             this.__defineGetter__('operator_index', function(){return operator_index;});
             this.__defineGetter__('silent', function(){return silent_obj._val;});
         }else{
             Object.defineProperty(this, 'operator_index', {'get': function(){return operator_index;}});
             Object.defineProperty(this, 'silent', {'get': function(){return silent_obj._val;}});
         }
-
         for(var s in schema){//set schema default
-            if(utils.obj_valid_key(opts, s)){this[s]=opts[s];}}
+            if(utils.obj_valid_key(schema, s)){this[s]=(typeof(opts[s])!=='undefined'?opts[s]:schema[s]);}}
 
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({

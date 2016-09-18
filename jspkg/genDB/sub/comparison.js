@@ -19,8 +19,8 @@ module.exports = function(){
 
     function comparision(opts){
         if(!opts){opts={};}
-        for(var s in schema){//no other schema treatment needed!
-            if(utils.obj_valid_key(schema, s)){this[s]=schema[s];}}
+        for(var s in schema){//set schema default
+            if(utils.obj_valid_key(schema, s)){this[s]=(typeof(opts[s])!=='undefined'?opts[s]:schema[s]);}}
 
         opts.hook_ins=(typeof(opts.hook_ins)!=='object'?{}:opts.hook_ins);
         this.hook_ins=new GLaDioS({

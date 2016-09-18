@@ -108,10 +108,16 @@ This is a placeholder.  I need to write an async tasker.  c0redP (Core-P aka Per
 
   `small_cycle` is similar to `large_cycle` (refer above). (Coming Soon)
 
+* `unique_prefix`: *readonly* `string`
+
+  **Unique Prefix**
+
+  `unique_prefix` passes through to `c0reModel` options
+
 
 ### c0redP
 
-* `c0redP(` **process** *(NodeJS process)*, **options** *(object)* `)`: *returns* `c0redP instance`
+* `c0redP(` **options** *(object)* `)`: *returns* `c0redP instance`
 
   **Constructor Function**
 
@@ -125,10 +131,20 @@ This is a placeholder.  I need to write an async tasker.  c0redP (Core-P aka Per
 
 ### c0re
 
+[ ] init
+
+  Suggested not required!
+
 [ ] ready
 
-[ ] exit
+  Suggested not required!
 
 [ ] start
 
-[ ] bind - low priority data-binding
+  Required!
+
+[ ] exit
+
+  Suggested not required!
+
+[ ] bind - (low priority) data-binding

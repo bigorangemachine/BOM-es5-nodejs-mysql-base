@@ -20,8 +20,8 @@ module.exports = function(){
         if(typeof(unique_id)!=='string' || (typeof(unique_id)==='string' && !utils.basic_str(unique_id))){
             throw new Error("[WHERECHAIN] Invalid 'unique_id' provided.");
         }else{
-            for(var s in chain_schema){//transfer opts values
-                if(utils.obj_valid_key(opts, s)){chain_schema[s]=opts[s];}}
+            for(var s in chain_schema){//set schema default
+                if(utils.obj_valid_key(chain_schema, s)){chain_schema[s]=(typeof(opts[s])!=='undefined'?opts[s]:chain_schema[s]);}}
         }
     }
 
@@ -61,7 +61,7 @@ module.exports = function(){
         };
 
         //private variables - need to be objects
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+        if((typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function'))){//use pre IE9
             this.__defineGetter__('where_inst', function(){return where_inst;});
             this.__defineGetter__('comparison_op_inst', function(){return comparison_op_inst;});
             this.__defineGetter__('where_list', function(){return where_list;});

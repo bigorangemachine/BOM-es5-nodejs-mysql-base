@@ -32,27 +32,7 @@ var mysql_conn = mysql.createConnection({
     });
 mysql_conn.version=config.db.version;
 
-var terminate_manifest=[], // {'obj_this': obj, 'func': 'func_name', 'args': [] } -> might need , 'sync_next': function(){}, 'next_arg': [null, null,{'next':true}, null]
-    do_terminate=function(reportTrace){
-        if(terminate_manifest.length>0){
-            for(var t=0;t<terminate_manifest.length;t++){
-                var task=terminate_manifest[t],
-                    args=(typeof(task.args)==='object' && task.args.length>0?task.args:[]),
-                    new_func=false,
-                    valid_obj_prop=(utils.obj_valid_key(task,'obj_this') && typeof(task.obj_this)==='object'?true:false);
-
-                if(valid_obj_prop && utils.obj_valid_key(task,'func') && typeof(task.func)==='string' && typeof(task.obj_this[task.func])==='function'){
-                    new_func=task.obj_this[task.func].bind(task.obj_this);
-                }else if(valid_obj_prop && (utils.obj_valid_key(task,'func') && typeof(task.func)==='function')){
-                    new_func=task.func.bind(task.obj_this);
-                }else if(typeof(task.func)==='function'){
-                    new_func=task.func.bind(null);
-                }
-                if(new_func!==false){
-                    new_func.apply(null,args);
-                }
-            }
-        }
+var do_terminate=function(reportTrace){
         if(!root_params.silent){
             if(reportTrace){console.trace();}
             console.log("\n\n\n================= do_terminate PID: "+process.pid+" =================","\n");

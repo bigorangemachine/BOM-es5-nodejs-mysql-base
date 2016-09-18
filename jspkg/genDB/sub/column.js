@@ -23,7 +23,7 @@ module.exports = function(){
 
         //private variables - need to be objects
         var silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
-        if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+        if((typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function'))){//use pre IE9
             //this.__defineSetter__('operator_index', function(v){operator_index=merge(true,{}, operator_index, v);});
             this.__defineGetter__('silent', function(){return silent_obj._val;});
         }else{
@@ -34,8 +34,8 @@ module.exports = function(){
         }
 
         var clean_schema=this.schema();
-        for(var s in clean_schema){
-            if(utils.obj_valid_key(clean_schema, s)){clean_schema[s]=(typeof(opts[s])!=='undefined' && utils.obj_valid_key(opts, s)?opts[s]:clean_schema[s]);}}
+        for(var s in clean_schema){//set schema default
+            if(utils.obj_valid_key(clean_schema, s)){clean_schema[s]=(typeof(opts[s])!=='undefined'?opts[s]:clean_schema[s]);}}
 
         if(!this.validate(clean_schema)){
             throw new Error("[COLUMNSCHEMA] Bad inital schema.");

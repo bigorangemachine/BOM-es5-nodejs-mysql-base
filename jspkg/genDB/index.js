@@ -19,7 +19,7 @@ module.exports = function(mysql){
                     return where_obj;},
                 silent_obj={'_val':(typeof(opts.silent)==='boolean'?opts.silent:false)};
 opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
-            if(typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function')){//use pre IE9
+            if((typeof(Object.defineProperty)!=='function' && (typeof(this.__defineGetter__)==='function' || typeof(this.__defineSetter__)==='function'))){//use pre IE9
                 //this.__defineSetter__('where_obj', where_obj_set);
                 this.__defineGetter__('where_obj', where_obj_get);
                 this.__defineGetter__('silent', function(){return silent_obj._val;});
@@ -87,8 +87,7 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
         return new_column;
     };
     genericDB.prototype.escape=function(valIn, colObj, tableName){//aliased function
-        for(var args=[],e=0;e<arguments.length;e++){args.push(arguments[e]);}//safer to transfer object to array
-        return this.escape_val.apply(this,args);
+        return this.escape_val.apply(this, utils.convert_args(arguments));
     };
     genericDB.prototype.escape_val=function(valIn, colObj, tableName){
         var self=this,
@@ -111,7 +110,7 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
         var now_reserved=['CURRENT_TIMESTAMP','NOW()'],
             is_num=(typeof(output)==='number' && (colObj.val_type.toLowerCase()==='int' || colObj.val_type.toLowerCase()==='float')?true:false);
         now_reserved.forEach(function(v,i,arr){now_reserved[i]=v.toUpperCase();});
-        if(colObj.is_null && (output===null || typeof(output)==='undefined' || (is_num && isNan(is_num)) )){//some kind of 'NULL' to mysql
+        if(colObj.is_null && (output===null || typeof(output)==='undefined' || (is_num && isNaN(is_num)) )){//some kind of 'NULL' to mysql
             output='NULL';}
         else if(colObj.val_type.toLowerCase()==='date'){
             var now_stamp=(compareVersions(mysql.version,'5.5')===1?'CURRENT_TIMESTAMP':'NOW()');//greater 5.5 likes CURRENT_TIMESTAMP - less 5.5 likes NOW()
@@ -651,11 +650,9 @@ if(doDebug){console.log("SQL: ",sql_insert);}
         var result=mysql.query(sql_insert);
 
         self.apply_callback(result,callbacks,function(res,cbs,arg){//res,cbs,arg - arguments supplied from apply_callback()
-            for(var _args=[],a=0;a<arguments.length;a++){_args.push(arguments[a]);}
-            if(typeof(callbacks.last)==='function'){callbacks.last.apply(self,_args);}//callbacks.last(this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
-
-            for(var _args=['last'],a=0;a<arguments.length;a++){_args.push(arguments[a]);}
-            if(typeof(callbacks.callback)==='function'){callbacks.callback.apply(self,_args);}//callbacks.callback('last',this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
+            if(typeof(callbacks.last)==='function'){callbacks.last.apply(self, utils.convert_args(arguments));}//callbacks.last(this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
+                
+            if(typeof(callbacks.callback)==='function'){callbacks.callback.apply(self,['last'].concat(utils.convert_args(arguments)));}//callbacks.callback('last',this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
 
         });
     };
