@@ -17,7 +17,11 @@ module.exports = function(process, fs, root_params){
             all_seps=[base_sep],
             cust_args=[//.arg and .var_set are required!
                 {'arg':'config','var_set':'root_params.config','split':base_sep,'wrap':base_wrap, 'type':'string'},
-                {'arg':'-ident','var_set':'cron_ident','split':base_sep,'wrap':base_wrap},
+                {'arg':'croncurrent','var_set':'root_params.croncurrent','split':base_sep,'wrap':base_wrap, 'type':'string'},
+                {'arg':'whichnode','var_set':'root_params.whichnode','split':base_sep, 'type':'string'},
+                {'arg':'cronfile','var_set':'root_params.cronfile','split':base_sep, 'type':'string'},
+                {'arg':'logpath','var_set':'root_params.logpath','split':base_sep, 'type':'string'},
+                {'arg':'-doremove','var_set':'root_params.doremove'},
                 {'arg':'-silent','var_set':'root_params.silent'}
             ],
             base_arg_func=function(strIn){

@@ -14,12 +14,11 @@ module.exports = function(){//dependancies
         )
     */
 
-    function genericDBThrowResultStatus(resObj, statusModel, events, debug){
+    function genericDBThrowResultStatus(resObj, statusModel, debug){
         var expected_constructor=['Query'];
         expected_constructor.forEach(function(v,i,arr){expected_constructor[i]=v.toLowerCase()});
         this._res=(typeof(resObj)==='object' && _.indexOf(expected_constructor,resObj.constructor.name.toLowerCase())!==-1?resObj:false);
-        this.status=(statusModel instanceof genericDBResultStatus?statusModel:new genericDBResultStatus());
-        this.events=(events instanceof Array?events:[]);
+        this.status=(statusModel.constructor.name===genericDBResultStatus.name?statusModel:new genericDBResultStatus(statusModel));
         this.do_debug=(debug===true?true:false);
         if(this._res===false && typeof(resObj)==='object'){throw new Error("[genericDBThrowResultStatus] 1st argument must be 'false' (boolean) or of constructor type '"+expected_constructor.split(', ')+"'.");}
     }

@@ -352,7 +352,7 @@ console.log("UNTESTED - found_escape: ",found_escape);
             validate_result={},
             is_valid=self.validate_logic_op(data.operator, validate_result),
             op_rule=(typeof(validate_result.flat.key)!=='undefined'?validate_result.flat.key:false);
-if(!self.silent){console.warn("[LOGICBASE] how op_rule lookup was written quickly and generally untested.  This method should really be improved");}
+//if(!self.silent){console.warn("[LOGICBASE] how op_rule lookup was written quickly and generally untested.  This method should really be improved");}
 //console.log("\n========================\n",'data',data,"\n",'validate_result: ',validate_result,"\n",'operator_index: ',self.operator_index[op_rule],"\n","\n","\n");
 
         var arg_sep=(validate_result.cleaned_input.is_func?', ':'AND ');

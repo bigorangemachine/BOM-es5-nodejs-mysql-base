@@ -306,7 +306,7 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
             bool_next=false,
             do_next_immediate_id=false,
             do_next=function(){//do not advance unless a complete flag (end or error) is present
-//console.log('NEXT CHECK ',typeof(nextFunc),' && ',bool_next);
+//console.log("\n\n\n\n++++++++++++++++++=====\n++++++++++++++++++=====NEXT CHECK===++++++++++++++++++\n",typeof(nextFunc),' && ',bool_next,"\n++++++++++++++++++\n\n\n\n");
                 var found_types=[];
                 events.forEach(function(v,i,arr){found_types.push(v.type);});//transfer
                 if(last_events_len!=events.length){//we want to do the below when we're done with the events being appeneded
@@ -341,11 +341,12 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
                     if(typeof(callbacks.done)==='function'){
                         var status_obj=new genericDBResultStatus({
                                 'is_success':(has_err===false?true:false),// successful! YEA!
+                                'events':events,// successful! YEA!
                                 'status':(has_err===false?'success':'fail'), //has rows/error! Give the rows/error!
                                 'info':{'context':out_data}
                             });
 
-                        callbacks.done.apply(self, new genericDBThrowResultStatus(res, status_obj, events, debugVar).asApply());
+                        callbacks.done.apply(self, new genericDBThrowResultStatus(res, status_obj, debugVar).asApply());
                     }
                     if(typeof(nextFunc)==='function'){nextFunc.apply(self, out_args);}
                 }
@@ -421,29 +422,29 @@ opts.silent=(typeof(opts.silent)==='boolean'?opts.silent:true);//temp ^_^
         if(typeof(dataObj)!=='object'){return false;}//no data
         if(typeof(callbacks)==='function'){callbacks={'done':callbacks};}//if passed lazily
         var sql_select='SELECT ',
+            base_cols=self.column_schema_cols('base', context_key),
+            sql_from='FROM `'+table_string+'` ',
+            table_string=self.table_index[context_key].table_name,
+            all_cols=self.column_schema_cols('all', context_key),
             count=0,
-            select_cols=[],
-            all_cols=self.column_schema_cols('all', context_key);
+            select_cols=[];
         for(var c=0;c<all_cols.length;c++){
             var key=all_cols[c];
             if(utils.obj_valid_key(dataObj,key)){
                 if(count!=0){sql_select=sql_select+', ';}
-                sql_select=sql_select+'`'+context_key+'`.'+ key +' AS '+key;
+                sql_select=sql_select+'`'+table_string+'`.'+ key +' AS '+key;
                 select_cols.push(key);
                 count++;
             }
         }
 
-        var base_keys=self.column_schema_cols('base', context_key),
-            sql_from='FROM `'+context_key+'` '
-
         var transform_obj={'where_sql':'','count':0};
         //try{
             self.where_obj.where_list_unset();//reset the chain
             transform_obj=self.where_transform(dataObj, context_key, function(key, whereCount){
-                if(_.indexOf(base_keys,key)!==-1 && _.indexOf(select_cols,key)===-1){//if base key and unused
+                if(_.indexOf(base_cols,key)!==-1 && _.indexOf(select_cols,key)===-1){//if base key and unused
                     if(count!=0){sql_select=sql_select+', ';}
-                    sql_select=sql_select+'`'+context_key+'`.'+ key +' AS '+key;
+                    sql_select=sql_select+'`'+table_string+'`.'+ key +' AS '+key;
                     select_cols.push(key);
                     count++;
                 }
@@ -476,7 +477,7 @@ if(doDebug){console.log("\n\t",'============== find() SQL: ============== ',"\n"
             };
         return output_func.bind(self);
     };
-    genericDB.prototype.validate_write=function(dataObj,errArr,doDebug){
+    genericDB.prototype.validate_write=function(dataObj,errArr,doDebug){//depricated
         var self=this,
             valid_keys={//minimum requirements
                 'version_id':undefined,
@@ -591,70 +592,61 @@ console.log('remember to detect (col_type) updatestamp/createstamp!')
         return {'valid_key_count':valid_key_count, 'valid_keys':valid_keys, 'valid_key_max':valid_key_max};
 
     };
-    genericDB.prototype.append=function(dataObj,callbacks,errArr,doDebug){
+    genericDB.prototype.append=function(dataObj,callbacks,doDebug){
         var self=this,
-            sql_insert='INSERT INTO `sample_tbl`(',
+            context_key=self.main_table(),
+            table_string=self.table_index[context_key].table_name,
+            insert_cols=[],
+            sql_full='',
+            sql_insert='INSERT INTO `'+table_string+'`(',
             sql_insert_vals=') VALUES (',
             sql_insert_end=');',
-            sql_insert_safe='INSERT INTO `sample_tbl` SET ?',
+            base_cols=self.column_schema_cols('base', context_key),
+            all_cols=self.column_schema_cols('all', context_key),
             found=0;
-        errArr=(typeof(errArr)!=='object'?[]:errArr);
         if(typeof(dataObj)!=='object'){return false;}//no data
         if(typeof(callbacks)==='function'){callbacks={'callback':callbacks};}//if passed lazily
-
-        var valid_res=self.validate_write(dataObj,errArr,doDebug);
-        if(valid_res===false){return false;}
-
-        var has_modified=false,
-            has_event=false;
-        for(var k in dataObj){
-            if(utils.obj_valid_key(dataObj,k)){//valid object key (non-prototype)
-//if(k==='cookie_vars'){if(doDebug){console.log("K: ",k);}}
-                if(_.indexOf(self.table_index[tableName],k)!==-1){//valid db table column name
-//if(k==='cookie_vars'){if(doDebug){console.log("\tK: ",k, dataObj[k]);}}
-                    var sql_val=dataObj[k];
-                    has_modified=(k.toLowerCase()==='date_modified'?true:has_modified);
-                    has_event=(k.toLowerCase()==='date_event'?true:has_event);
-                    if(k.indexOf('date_')===0 && sql_val==='CURRENT_TIMESTAMP' && !self.mysql_55_(sql_val)){//5.6 likes current timestamp
-                        sql_val=sql_val;}
-                    else if(k.indexOf('date_')===0 && sql_val==='CURRENT_TIMESTAMP' && self.mysql_55_hack(sql_val)){//5.5 likes NOW()
-                        sql_val='NOW()';}
-                    else{
-                        sql_val=mysql.escape(dataObj[k]);}
-                    sql_insert=sql_insert+'`'+k+'`,';
-                    sql_insert_vals=sql_insert_vals + sql_val+',';
+if(!self.silent){console.warn("[genericDB] Should be checking colum types here. Primary Key? Should be Null?\nForeign Key? Should be Found");}
+        var transform_obj={'columns':[],'clean':{},'count':0};
+        //try{
+            transform_obj=self.insert_transform(dataObj, context_key, function(key, incIn){
+                if(_.indexOf(base_cols,key)!==-1 && _.indexOf(insert_cols,key)===-1){//if base key and unused
+                    insert_cols.push(key);
                     found++;
                 }
-            }
-        }
-
-        if(found>0 && !has_modified && self.mysql_55_hack('CURRENT_TIMESTAMP')){//5.5 doesn'ts auto-update
-            sql_insert=sql_insert+'`date_modified`,';
-            sql_insert_vals=sql_insert_vals + 'NOW(),';
-        }
-        if(found>0 && !has_event && self.mysql_55_hack('CURRENT_TIMESTAMP')){//5.5 doesn'ts auto-update
-console.log('append dataObj.url - has_event is true: ',dataObj.url);
-            sql_insert=sql_insert+'`date_event`,';
-            sql_insert_vals=sql_insert_vals + 'NOW(),';
-        }else{
-console.log('append dataObj.url - has_event is false: ',dataObj.url);
-        }
-
-
+            });
+        // }catch(e){
+        //     if(!self.silent){console.warn("[GENERICDB] Where build in 'append' failed. "+e.toString());}
+        // }
         if(found>0){//valid keys found (white list)
-            sql_insert=utils.check_strip_last(sql_insert,',') + utils.check_strip_last(sql_insert_vals,',') + sql_insert_end;
-        }else{//no valid keys found (white list)
-            errArr.push('[GENERICDB]write_found_0');
-            return false;}
-if(doDebug){console.log("SQL: ",sql_insert);}
-        var result=mysql.query(sql_insert);
+            var inc=0;
+            for(var key in transform_obj.clean){
+                if(utils.obj_valid_key(transform_obj.clean, key) && _.indexOf(insert_cols,key)!==-1){
+                    if(inc!=0){sql_insert=sql_insert+', ';}
+                    sql_insert=sql_insert+'`'+key+'`';
+                    sql_insert_vals=sql_insert_vals+''+transform_obj.clean[key];
+                    inc++;
+                }
+            }
+            sql_insert=utils.check_strip_last(sql_insert,',');
+            sql_insert_vals=utils.check_strip_last(sql_insert_vals,',')
+            sql_full=sql_insert + sql_insert_vals + sql_insert_end;
+        }
 
-        self.apply_callback(result,callbacks,function(res,cbs,arg){//res,cbs,arg - arguments supplied from apply_callback()
-            if(typeof(callbacks.last)==='function'){callbacks.last.apply(self, utils.convert_args(arguments));}//callbacks.last(this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
-                
-            if(typeof(callbacks.callback)==='function'){callbacks.callback.apply(self,['last'].concat(utils.convert_args(arguments)));}//callbacks.callback('last',this_arguments[0], ... ,this_arguments[ this_arguments.length-1 ]
+        if(transform_obj.count===0 || found===0){
+if(doDebug){console.log('====== '+context_key+' ||| cont ZERO: transform_obj.count: '+transform_obj.count+'  found: '+found+'  =======');}
+            var fail_func=function(){
+                var status_obj=new genericDBResultStatus({'is_success':false,'info':{'input':dataObj,'query_segments':[sql_insert, sql_insert_vals, sql_insert_end]}});
+                callbacks.done.apply(self,new genericDBThrowResultStatus(false, status_obj).asApply());
+            };
+            return fail_func.bind(self);
+        }
 
-        });
+if(doDebug){console.log("\n\t",'============== append() SQL: ============== ',"\n",sql_full,"\n");}
+        var output_func=function(lastCall){
+                self.apply_callback(mysql.query(sql_full), callbacks, lastCall);//, doDebug
+            };
+        return output_func.bind(self);
     };
     genericDB.prototype.update=function(dataObj,callbacks,tableName,errArr,doDebug){
         var self=this;
@@ -780,7 +772,26 @@ console.log("\n\n========= genericDB.prototype.update =========\n\n");
         sql_limit=(utils.obj_valid_key(dataObj,'nolimit') && dataObj.nolimit===true && self.allow_nolimit?'':sql_limit);
         return sql_limit;
     };
+    genericDB.prototype.insert_transform=function(dataObj, tableName, itFunc){
+        var self=this,
+            found_cols=[],
+            clean_vals={},
+            all_cols=self.column_schema_cols('all', tableName),
+            i_count=0;
 
+        for(var c=0;c<all_cols.length;c++){
+            var key=all_cols[c];
+            if(utils.obj_valid_key(dataObj,key) && _.indexOf(all_cols,key)!==-1){
+                //if(i_count!=0){}
+                found_cols.push(key);
+                clean_vals[key]=self.escape_val(dataObj[key], self.get_column(key,tableName), tableName);
+                i_count++;
+            }
+            if(typeof(itFunc)==='function'){itFunc(key,i_count);}
+        }
+        return {'columns':found_cols,'clean':clean_vals,'count':i_count};
+
+    };
     genericDB.prototype.where_transform=function(dataObj, tableName, itFunc){
         var self=this,
             all_cols=self.column_schema_cols('all', tableName),
@@ -818,6 +829,9 @@ console.log("\n\n========= genericDB.prototype.update =========\n\n");
         return (mysql.version=='5.5' && dateIn.toUpperCase()==='CURRENT_TIMESTAMP'?true:false);
     };
     genericDB.prototype.validate_write=function(){//depricated
+        var self=this;
+    };
+    genericDB.prototype.parse_result_status=function(statusModelIn){
         var self=this;
     };
     genericDB.prototype.terminate=function(next){
