@@ -98,33 +98,7 @@ rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
         tickets_db=new ticketsDB(),
         repos_db=new reposDB();
 
-    var find_func=repos_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] repos_db DONE",statusModel.identify());
-            tickets_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] tickets_db DONE",statusModel.identify());
-                ticket_prefix_index_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] ticket_prefix_index_db DONE",statusModel.identify());
-                    team_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] team_db DONE",statusModel.identify());
-                        statuses_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] statuses_db DONE",statusModel.identify());
-                            repo_ticket_index_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] repo_ticket_index_db DONE",statusModel.identify());
-                                repo_module_index_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] repo_module_index DONE",statusModel.identify());
-                                    modules_db.find({'id':1},function(resObj, statusModel, events){
-console.log("[rootThread] modules DONE",statusModel.identify());
-console.log("\n\n===================== -=ALL DONE-= =====================\n\n")
-                                        flagPosFunc();
-                                    })();
-                                })();
-                            })();
-                        })();
-                    })();
-                })();
-            })();
-        });
-    find_func();
+    flagPosFunc();
 
 });
 //},{'priority':9000});

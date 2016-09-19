@@ -42,25 +42,56 @@ var do_terminate=function(reportTrace){
     },
     do_init=function(){//initalize
         //custom modules
-        var subTests=require('./sub/tests')(),
-            theModel=require('./sub/theModel')();
+        // var subTests=require('./sub/tests')(),
+        //     theModel=require('./sub/theModel')();
 
         var do_sets=[
             function(doNext){
-                /*
-                * !!!!!!!!!!!!!!!!!!!!!!!!!! TESTING THESE!!!!
-                * theModel(doFunc)
-                * theModel(doFunc,opts)
-                * theModel(posFunc,negFunc,doFunc,opts)
-                * theModel(posFunc,negFunc,doFunc,idleFunc,opts)
-                */
-                try{test1=new theModel(function(){});}
-                catch(e){do_err("[theModel TEST] Could not build 'SINGLE ARG'\n"+e.toString());}
+                modulesDB=require('./jspkg/modulesDB')(mysql_conn);
+                repoModuleIndexDB=require('./jspkg/repoModuleIndexDB')(mysql_conn);
+                repoTicketIndexDB=require('./jspkg/repoTicketIndexDB')(mysql_conn);
+                statusesDB=require('./jspkg/statusesDB')(mysql_conn);
+                teamDB=require('./jspkg/teamDB')(mysql_conn);
+                ticketPrefixIndexDB=require('./jspkg/ticketPrefixIndexDB')(mysql_conn);
+                ticketsDB=require('./jspkg/ticketsDB')(mysql_conn);
+                reposDB=require('./jspkg/reposDB')(mysql_conn);
 
-                doNext();
-            },
-            function(doNext){
-                subTests.typical(doNext);
+                var modules_db=new modulesDB(),
+                    repo_module_index_db=new repoModuleIndexDB(),
+                    repo_ticket_index_db=new repoTicketIndexDB(),
+                    statuses_db=new statusesDB(),
+                    team_db=new teamDB(),
+                    ticket_prefix_index_db=new ticketPrefixIndexDB(),
+                    tickets_db=new ticketsDB(),
+                    repos_db=new reposDB();
+
+                var find_func=repos_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] repos_db DONE",statusModel.identify());
+                        tickets_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] tickets_db DONE",statusModel.identify());
+                            ticket_prefix_index_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] ticket_prefix_index_db DONE",statusModel.identify());
+                                team_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] team_db DONE",statusModel.identify());
+                                    statuses_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] statuses_db DONE",statusModel.identify());
+                                        repo_ticket_index_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] repo_ticket_index_db DONE",statusModel.identify());
+                                            repo_module_index_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] repo_module_index DONE",statusModel.identify());
+                                                modules_db.find({'id':1},function(resObj, statusModel, events){
+console.log("[rootThread] modules DONE",statusModel.identify());
+console.log("\n\n===================== -=ALL DONE-= =====================\n\n")
+                                                    doNext();
+                                                })();
+                                            })();
+                                        })();
+                                    })();
+                                })();
+                            })();
+                        })();
+                    });
+                find_func();
             }
         ];
         var binded_dos=[];

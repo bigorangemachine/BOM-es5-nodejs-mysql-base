@@ -1,6 +1,9 @@
 config.js
 config.dev.js
 config.test.js
+static.js
+static.dev.js
+static.test.js
 node_modules/
 api/myconfig.js
 cron.job
