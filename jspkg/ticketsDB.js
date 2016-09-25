@@ -2,7 +2,7 @@
 module.exports = function(mysql){
 
     //private dependancies
-    var genericDB=require('./genericDB')(mysql),utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
+    var genericDB=require('GenDB')(mysql),utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
 
     //private scope
     var self_init=function(){

@@ -45,6 +45,23 @@ var do_terminate=function(reportTrace){
         // var subTests=require('./sub/tests')(),
         //     theModel=require('./sub/theModel')();
 
+        var mysql_conn={},
+            modulesDB={},
+            repoModuleIndexDB={},
+            repoTicketIndexDB={},
+            statusesDB={},
+            teamDB={},
+            ticketPrefixIndexDB={},
+            ticketsDB={},
+            reposDB={},
+            modulesDB={},
+            repoModuleIndexDB={},
+            repoTicketIndexDB={},
+            statusesDB={},
+            teamDB={},
+            ticketPrefixIndexDB={},
+            ticketsDB={},
+            reposDB={};
         var do_sets=[
             function(doNext){
                 modulesDB=require('./jspkg/modulesDB')(mysql_conn);

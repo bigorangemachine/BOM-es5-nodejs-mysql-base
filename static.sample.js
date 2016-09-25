@@ -1,5 +1,5 @@
 
-var mystatic={
+var repos={
     'myaccount':{
   "name": "TELUS My Account",
   "context": "/my-account",
@@ -34,4 +34,4 @@ var mystatic={
 };
 
 
-module.exports = mystatic;
+module.exports = {'repos':repos};

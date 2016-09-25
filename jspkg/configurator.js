@@ -1,13 +1,14 @@
 
 module.exports = function(process, fs, root_params){
-    var utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
     root_params.cmd=process.argv[0]; //info!
     root_params.path=process.argv[1];
 
-    var _ex=root_params.path.split('/');
-    root_params.doc_root=_ex.slice(0,_ex.length-1).join('/')+'/';
-    delete _ex;
+    var _ex=root_params.path.split('/'),
+        entryfile=_ex[_ex.length-1],
+        utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
+    root_params.doc_root=_ex.slice(0,_ex.length-1).join('/')+'/';//rebuild cwd without the file!
     root_params.rootmodule=utils.check_strip_first(root_params.path, root_params.doc_root);
+    delete _ex;
 //console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!! CONFIGURATOR SETTING DOC_ROOT - '+root_params.doc_root + ' - !!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 
     if(process.argv.length>2){//process node args - first 2 are always ['node', 'thefile-in-this-case-index.js']
@@ -136,7 +137,10 @@ module.exports = function(process, fs, root_params){
     }catch(e){
         console.error('CONFIGURATOR BAD CONFIG PATH: \''+root_params.config+'\' ');
         if(!root_params.silent){console.log('[ERROR]: ',e.toString());}
-        process.exit();
+
+        if(entryfile.toLowerCase()==='install.js'){throw new Error("[CONFIGURATOR] Invalid config filepath.");}
+        else{process.exit();}
+
     }
     return config;
 };

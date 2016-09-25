@@ -123,8 +123,13 @@ module.exports = function(root_params){//dependancies
                                 exit_manager.SIGINT_inc++;
                                 exit_manager.date_stamp=new Date();
                             }else{//the buffer!
-                                if(exit_manager.SIGINT_inc-1>=exit_manager.SIGINT_max || ((new Date()) - exit_manager.date_stamp)>(exit_manager.SIGINT_timeout)){
-                                    console.log("[ExitManager] SIGINT EXCEEDED "+(exit_manager.SIGINT_inc-1)+" of "+exit_manager.SIGINT_max+"! Attempting abort & exit!");
+                                var timefail=(((new Date()) - exit_manager.date_stamp)>(exit_manager.SIGINT_timeout)?true:false),
+                                    sigintfail=(exit_manager.SIGINT_inc-1>=exit_manager.SIGINT_max?true:false);
+                                if(sigintfail || timefail){
+                                    console.log("[ExitManager] SIGINT EXCEEDED "+
+                                        (sigintfail?(exit_manager.SIGINT_inc-1)+" of "+exit_manager.SIGINT_max:'')+
+                                        (timefail?'SIGNINT delay time exceeded '+(exit_manager.SIGINT_timeout/1000).toFixed(1)+' seconds':'')+
+                                    "! Attempting abort & exit!");
                                     if(exit_manager.shutdown_status=='forced'){process.abort();}
                                     exit_manager.SIGINT_inc=0;
                                     exit_manager.start_exit();

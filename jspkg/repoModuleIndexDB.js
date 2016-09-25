@@ -2,8 +2,8 @@
 module.exports = function(mysql){
 
     //private dependancies
-    var genericDB=require('./genericDB')(mysql),utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
-    
+    var genericDB=require('GenDB')(mysql),utils=require('bom-utils'),merge=require('merge'),_=require('underscore');
+
     //private scope
     var self_init=function(){
             this.add_schema({'col_name': 'id', 'is_null': false, 'is_base': true, 'size': 20, 'val_type': 'int', 'key_type': 'primary'});

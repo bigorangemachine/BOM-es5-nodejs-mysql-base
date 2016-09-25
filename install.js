@@ -1,7 +1,6 @@
 /*
-    Any piece work should be written here.
-*/
-
+ * This should be a safe & non-desctructive install script!
+ */
 //modules
 var _ = require('underscore'),//http://underscorejs.org/
     merge = require('merge'),//allows deep merge of objects
@@ -28,9 +27,23 @@ var doc_root='',
         'config':'./config',
         'found_params':[]
     };
-root_params.config=root_params.config+'.dev';
-var config=require('./jspkg/configurator')(process, fs, root_params);
-doc_root=root_params.doc_root;
+try{
+    root_params.config=root_params.config;
+    var config=require('./jspkg/configurator')(process, fs, root_params);
+    doc_root=root_params.doc_root;
+}catch(e){
+
+    if(e.toString().toLowerCase().indexOf(('Invalid config filepath').toLowerCase())!==-1){
+        console.log("Manual Steps Required: ");
+            console.log("\t"+"1) Duplicate config.sample.js into config.js (config.dev.js and config.test.js for running dev.js and test.js) to use your API keys and Database credientals.");
+            console.log("\t"+"2) Duplicate static.sample.js into static.js (static.dev.js and static.test.js for running dev.js and test.js) and populate your repo list.");
+            console.log("\t"+"3) Take contents from '_dev/db.sql' and create the database");
+            console.log("\t"+"4) Then run 'npm install'.");
+    }else{
+        throw new Error(e);
+    }
+    process.exit();
+}
 
 var c0redP=require('Pourtals')(),
     rootThread=new c0redP(function(){
@@ -81,11 +94,7 @@ rootThread.on('init',function(pkg,flagPosFunc,flagNegFunc){
         return flagPosFunc.apply(null,utils.convert_args(arguments));
     });
     return connect_result;
-});//,function(){console.log("POS!");},function(){console.log("NEG!");}
-rootThread.on('init',function(pkg,flagPosFunc,flagNegFunc){
-    console.log("rootThread.on('init') 9000 priority");
-    flagPosFunc();//flagNegFunc();
-},{'priority':9000});
+});
 // \\ INIT CALLBACKS!
 
 
@@ -101,7 +110,7 @@ rootThread.on('ready',function(pkg,flagPosFunc,flagNegFunc){
     ticketsDB=require('./jspkg/ticketsDB')(mysql_conn);
     reposDB=require('./jspkg/reposDB')(mysql_conn);
     dbList={
-        'modules_db': new modulesDB(),
+        'modules_db': new modulesDB({'silent':true}),
         'repo_module_index_db': new repoModuleIndexDB(),
         'repo_ticket_index_db': new repoTicketIndexDB(),
         'statuses_db': new statusesDB(),
@@ -116,19 +125,59 @@ rootThread.on('ready',function(pkg,flagPosFunc,flagNegFunc){
 });
 
 rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
+    if(!root_params.silent){console.log("Installing....");}
+    flagPosFunc();
+});
+rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
     if(typeof(statics)!=='object'){
+        if(!root_params.silent){console.log("No statics var!");}
         flagNegFunc();
     }else{
-        flagPosFunc();
+        var ParanoiaTask=new Paranoia(flagPosFunc, {'pool_size':50}),
+            agg_func=function(v,i,arr){
+                var reponame=v.repo;
+                if(!root_params.silent){console.log("Looking for '"+reponame+"'.");}
+                ParanoiaTask.enqueue(function(p,pos,neg){
+                    if(!root_params.silent){console.log("Looking for '"+reponame+"'.");}
+                    var do_find=dbList.modules_db.find({'module':reponame},function(resObj, statusModel){//is it there?
+                        var identifyresult=statusModel.identify();//store for optimization (function sorts through arrays)
+                        if(identifyresult.status==='norows'){//not there!
+                            if(!root_params.silent){console.log("\t'"+reponame+"' was not found. Attempting to write.");}
+                            var do_append=dbList.modules_db.append({'module':reponame},function(appResObj, appStatusModel){
+                                if(appStatusModel.identify().status==='write'){
+                                    if(!root_params.silent){console.log("\t'"+reponame+"' ADDED.\n");}
+                                    pos();}//promise callback
+                                else{
+                                    if(!root_params.silent){console.log("Repo '"+reponame+"' could not be written.");}
+                                    neg();}//promise callback
+                            });
+                            do_append();
+                        }else if(identifyresult.status==='error'){
+                            neg();}//promise callback
+                        else {
+                            pos();}//promise callback
+                    });
+                    do_find();
+                });
+            };
+        for(var k in statics.repos){
+            if(utils.obj_valid_key(statics.repos,k)){
+                statics.repos[k]['modules'].forEach(agg_func);
+                statics.repos[k]['css_libraries'].forEach(agg_func);
+            }
+        }
+        ParanoiaTask.execute();
     }
 });
-//},{'priority':9000});
+rootThread.on('exit',function(pkg,flagPosFunc,flagNegFunc){
+    if(!root_params.silent){console.log("Completed Installation.");}
+    flagPosFunc();
+});
 
 
 
 // EXIT CALLBACKS!
 rootThread.on('exit',function(pkg,flagPosFunc,flagNegFunc){
-    console.log("rootThread.on('exit') 9000 priority");
     mysql_conn.end(function(err){//The connection is terminated now
         if(err){
             if(!root_params.silent){console.log('===mysql_conn.end===',arguments);}
