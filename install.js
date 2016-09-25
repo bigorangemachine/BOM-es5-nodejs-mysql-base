@@ -99,6 +99,7 @@ rootThread.on('init',function(pkg,flagPosFunc,flagNegFunc){
 
 
 
+// READY CALLBACKS!
 rootThread.on('ready',function(pkg,flagPosFunc,flagNegFunc){
 
     modulesDB=require('./jspkg/modulesDB')(mysql_conn);
@@ -111,69 +112,141 @@ rootThread.on('ready',function(pkg,flagPosFunc,flagNegFunc){
     reposDB=require('./jspkg/reposDB')(mysql_conn);
     dbList={
         'modules_db': new modulesDB({'silent':true}),
-        'repo_module_index_db': new repoModuleIndexDB(),
+        'repos_db': new reposDB({'silent':true}),
+        'repo_module_index_db': new repoModuleIndexDB({'silent':true}),
         'repo_ticket_index_db': new repoTicketIndexDB(),
         'statuses_db': new statusesDB(),
         'team_db': new teamDB(),
         'ticket_prefix_index_db': new ticketPrefixIndexDB(),
-        'tickets_db': new ticketsDB(),
-        'repos_db': new reposDB()
+        'tickets_db': new ticketsDB()
     };
 
     flagPosFunc();
 
 });
+// \\ READY CALLBACKS!
 
+
+// START CALLBACKS!
+var repo_module_index=[];
 rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
     if(!root_params.silent){console.log("Installing....");}
-    flagPosFunc();
-});
-rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
     if(typeof(statics)!=='object'){
         if(!root_params.silent){console.log("No statics var!");}
+        rootThread.do_exit();
         flagNegFunc();
     }else{
-        var ParanoiaTask=new Paranoia(flagPosFunc, {'pool_size':50}),
-            agg_func=function(v,i,arr){
-                var reponame=v.repo;
-                if(!root_params.silent){console.log("Looking for '"+reponame+"'.");}
-                ParanoiaTask.enqueue(function(p,pos,neg){
-                    if(!root_params.silent){console.log("Looking for '"+reponame+"'.");}
-                    var do_find=dbList.modules_db.find({'module':reponame},function(resObj, statusModel){//is it there?
-                        var identifyresult=statusModel.identify();//store for optimization (function sorts through arrays)
-                        if(identifyresult.status==='norows'){//not there!
-                            if(!root_params.silent){console.log("\t'"+reponame+"' was not found. Attempting to write.");}
-                            var do_append=dbList.modules_db.append({'module':reponame},function(appResObj, appStatusModel){
-                                if(appStatusModel.identify().status==='write'){
-                                    if(!root_params.silent){console.log("\t'"+reponame+"' ADDED.\n");}
-                                    pos();}//promise callback
-                                else{
-                                    if(!root_params.silent){console.log("Repo '"+reponame+"' could not be written.");}
-                                    neg();}//promise callback
-                            });
-                            do_append();
-                        }else if(identifyresult.status==='error'){
-                            neg();}//promise callback
-                        else {
-                            pos();}//promise callback
-                    });
-                    do_find();
-                });
-            };
-        for(var k in statics.repos){
-            if(utils.obj_valid_key(statics.repos,k)){
-                statics.repos[k]['modules'].forEach(agg_func);
-                statics.repos[k]['css_libraries'].forEach(agg_func);
-            }
-        }
-        ParanoiaTask.execute();
+        flagPosFunc();
     }
 });
-rootThread.on('exit',function(pkg,flagPosFunc,flagNegFunc){
+rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
+    var ParanoiaTask=new Paranoia(flagPosFunc, {'pool_size':50}),
+        task_func=function(indexId,typeStr,inputStr,genDBObj,p,pos,neg){
+            var data_obj={};
+            data_obj[typeStr]=inputStr;
+            if(!root_params.silent){console.log("Looking for "+typeStr+" '"+inputStr+"'.");}
+            var do_find=genDBObj.find(data_obj,function(resObj, statusModel){//is it there?
+                    var seek=false,
+                        populate_result_index=function(seekKey,idIn){
+                            if(typeStr==='module'){repo_module_index[seekKey].module.id=idIn;}
+                            else if(typeStr==='repo'){repo_module_index[seekKey].repo.id=idIn;}
+                        },
+                        identifyresult=statusModel.identify();
+                    for(var rkey=0;rkey<repo_module_index.length;rkey++){if(repo_module_index[rkey].ident===indexId){seek=rkey;break;}}
+                    if(seek===false){throw new Error("repo_module_index could not find its unique id.");}
+                    if(identifyresult.status==='norows'){//not there!
+                        if(!root_params.silent){console.log("\tThe "+typeStr+" ''"+inputStr+"' was not found. Attempting to write.");}
+                        var do_append=genDBObj.append(data_obj,function(appResObj, appStatusModel){
+                            if(appStatusModel.identify().status==='write'){
+                                if(!root_params.silent){console.log("\tThe "+typeStr+" '"+inputStr+"' ADDED.\n");}
+//console.log("identifyresult: ",appStatusModel.identify());
+                                populate_result_index(seek,appStatusModel.identify().inserted_id);
+                                pos();}//promise callback
+                            else{
+                                if(!root_params.silent){console.log("The "+typeStr+" ''"+inputStr+"' could not be written.");}
+                                neg();}//promise callback
+                        });
+                        do_append();
+                    }else if(identifyresult.status==='dataset'){
+//console.log("identifyresult: ",identifyresult);
+                        populate_result_index(seek,identifyresult.rows[0].id);
+                        pos();//promise callback
+                    }
+                    else{neg();}// promise callback
+
+                });
+            do_find();
+
+        },
+        module_func=function(uniID, modulename){
+            ParanoiaTask.enqueue(function(p,pos,neg){
+                task_func(uniID, 'module', modulename, dbList.modules_db, p, pos, neg);
+            });
+        },
+        repo_func=function(uniID, reponame){
+            ParanoiaTask.enqueue(function(p,pos,neg){
+                task_func(uniID, 'repo', reponame, dbList.repos_db, p, pos, neg);
+            });
+        },
+        agg_func=function(v,i,arr){
+            var unique_str=md5(v.repo+'-'+v.name+'-'+i+new Date().toString()+'-'+utils.getRandomInt(100000, 999999));
+            repo_module_index.push({'repo':{'name':v.repo,'id':false}, 'module':{'name':v.name,'id':false}, 'ident':unique_str});
+            module_func(unique_str, v.name);
+            repo_func(unique_str, v.repo);
+        };
+    for(var k in statics.repos){
+        if(utils.obj_valid_key(statics.repos,k)){
+            statics.repos[k]['modules'].forEach(agg_func);
+            statics.repos[k]['css_libraries'].forEach(agg_func);
+        }
+    }
+    ParanoiaTask.execute();
+});
+rootThread.on('start',function(pkg,flagPosFunc,flagNegFunc){
+//console.log("repo_module_index: ",repo_module_index);
+    var ParanoiaTask=new Paranoia(flagPosFunc, {'pool_size':50}),
+        task_func=function(dataObj,genDBObj,p,pos,neg){
+            var typeStr='repo_module_index';
+            if(!root_params.silent){console.log("Looking for "+typeStr+" '"+JSON.stringify(dataObj)+"'.");}
+            var do_find=genDBObj.find(dataObj,function(resObj, statusModel){//is it there?
+                    var identifyresult=statusModel.identify();
+                    if(identifyresult.status==='norows'){//not there!
+                        if(!root_params.silent){console.log("\tThe "+typeStr+" '"+JSON.stringify(dataObj)+"' was not found. Attempting to write.");}
+                        var do_append=genDBObj.append(dataObj,function(appResObj, appStatusModel){
+                            if(appStatusModel.identify().status==='write'){
+                                if(!root_params.silent){console.log("\tThe "+typeStr+" '"+JSON.stringify(dataObj)+"' ADDED.\n");}
+                                pos();}//promise callback
+                            else{
+                                if(!root_params.silent){console.log("The "+typeStr+" ''"+JSON.stringify(dataObj)+"' could not be written.");}
+                                neg();}//promise callback
+                        });
+                        do_append();
+                    }else if(identifyresult.status==='dataset'){
+                        pos();//promise callback
+                    }
+                    else{neg();}// promise callback
+                });
+            do_find();
+
+        };
+    repo_module_index.forEach(function(v,i,arr){
+        (function(val){
+            var module_id=val.module.id,repo_id=val.repo.id;
+            if(repo_id!==false && module_id!==false && repo_id===module_id){
+                ParanoiaTask.enqueue(function(p,pos,neg){task_func({'repo_id':repo_id,'module_id':module_id}, dbList.repo_module_index_db, p, pos, neg);});}
+        })(v);
+        // v.ident;//{'repo':{'name':v.repo,'id':false}, 'module':{'name':v.name,'id':false}, 'ident':unique_str}
+        // v.repo.name;
+        // v.module.name;
+    });
+    ParanoiaTask.execute();
+});
+rootThread.on('exit',function(pkg,flagPosFunc,flagNegFunc){//START THE EXIT!
     if(!root_params.silent){console.log("Completed Installation.");}
     flagPosFunc();
 });
 
+// \\ START CALLBACKS!
 
 
 // EXIT CALLBACKS!
